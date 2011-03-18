@@ -78,3 +78,5 @@ def get_processor(register_set, system_manager):
 
 def get_process_scheduler(processor_list, system_manager):
     pass
+def wait_for_next_time_step(object, done):
+	pass

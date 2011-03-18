@@ -6,8 +6,8 @@ from asc_t1 import *
 
 __TOTAL_POINTS = 0
 StdOutLock = Lock()
-DEBUG_MODE = 0
-PRINT_STATISTICS = 0
+DEBUG_MODE = 1
+PRINT_STATISTICS = 1
 
 class SystemManager(Thread):
     def __init__(self, TMAX, num_caches, num_register_sets, num_processors, num_ram_cells, num_cache_cells, num_register_cells, num_ram_reqs_per_time_step, processor_register_dic, register_cache_dic, process_list, time_limit, max_max_processing_delay_for_bonus, bonus1, max_avg_processing_delay_for_bonus, bonus2, max_cost_for_bonus, bonus3):
@@ -137,7 +137,7 @@ class SystemManager(Thread):
 
             l = []
             for i in range(self.__num_cache_cells):
-                l.append(-1)
+                l.append((-1, -1))
             
             self.__cache_status_dic[current_thread()] = l
 
@@ -167,7 +167,7 @@ class SystemManager(Thread):
 
             l = []
             for i in range(self.__num_register_cells):
-                l.append(-1)
+                l.append((-1, -1))
             
             self.__register_status_dic[current_thread()] = l
 
@@ -397,7 +397,7 @@ class SystemManager(Thread):
             f, t, rid = key
             if (f == from_ and t == to_):
                 dic_addr, time = self.__req_dic[key]
-                if ((dic_addr == addr) and (time < 0) and ((-time) == (self.__t - 1))):
+                if ((dic_addr == addr) and (time < 0) and ((-time) <= (self.__t - 1))):
                     self.__req_dic[key] = (dic_addr, -(self.__TMAX + 10))
                     found = 1
                     break
@@ -522,7 +522,7 @@ class SystemManager(Thread):
             f, t, rid = key
             if (f == from_ and t == to_):
                 dic_addr, time = self.__req_dic[key]
-                if ((dic_addr == addr) and (time < 0) and ((-time) == (self.__t - 1))):
+                if ((dic_addr == addr) and (time < 0) and ((-time) <= (self.__t - 1))):
                     self.__req_dic[key] = (dic_addr, -(self.__TMAX + 10))
                     found = 1
                     break
@@ -956,6 +956,8 @@ def test2():
     NUM_OPS_PER_PROCESS = 5
     NUM_ADDR_PER_OP = 3
 
+    random.seed(19032011)
+
     process_list = []
     ram_addr = 0
     for i in range(NUM_PROCESSES):
@@ -978,7 +980,7 @@ def test2():
 
     register_cache_dic = {}
     processor_register_dic = {}    
-    system_manager = SystemManager(TMAX, NUM_CACHES, NUM_PROCESSORS, NUM_PROCESSORS, NUM_RAM_CELLS, NUM_CACHE_CELLS, NUM_REGISTER_CELLS, NUM_RAM_REQS_PER_TIME_STEP, processor_register_dic, register_cache_dic, process_list, TIME_LIMIT, 233, 3, 124.0, 3, 55500, 4)
+    system_manager = SystemManager(TMAX, NUM_CACHES, NUM_PROCESSORS, NUM_PROCESSORS, NUM_RAM_CELLS, NUM_CACHE_CELLS, NUM_REGISTER_CELLS, NUM_RAM_REQS_PER_TIME_STEP, processor_register_dic, register_cache_dic, process_list, TIME_LIMIT, 229, 3, 124.0, 3, 50224, 4)
 
     ram = get_RAM(NUM_RAM_CELLS, NUM_RAM_REQS_PER_TIME_STEP, system_manager)
 
@@ -1045,6 +1047,8 @@ def test3():
     NUM_OPS_PER_PROCESS = 10
     NUM_ADDR_PER_OP = 6
 
+    random.seed(19032011)
+
     process_list = []
     for i in range(NUM_PROCESSES):
         lop = []
@@ -1061,11 +1065,15 @@ def test3():
         p = Process(lop)
         process_list.append((1, p))
     
-    init();
-
     register_cache_dic = {}
     processor_register_dic = {}    
-    system_manager = SystemManager(TMAX, NUM_CACHES, NUM_PROCESSORS, NUM_PROCESSORS, NUM_RAM_CELLS, NUM_CACHE_CELLS, NUM_REGISTER_CELLS, NUM_RAM_REQS_PER_TIME_STEP, processor_register_dic, register_cache_dic, process_list, TIME_LIMIT, 543, 3, 288.0, 3, 179800, 4)
+    system_manager = SystemManager(TMAX, NUM_CACHES, NUM_PROCESSORS, NUM_PROCESSORS, NUM_RAM_CELLS, NUM_CACHE_CELLS, NUM_REGISTER_CELLS, NUM_RAM_REQS_PER_TIME_STEP, processor_register_dic, register_cache_dic, process_list, TIME_LIMIT, 540, 3, 293.0, 3, 163500, 4)
+
+    processor_cache_index = []
+    for i in range(NUM_PROCESSORS):
+        processor_cache_index.append(i % NUM_CACHES)
+
+    init()
 
     ram = get_RAM(NUM_RAM_CELLS, NUM_RAM_REQS_PER_TIME_STEP, system_manager)
 
@@ -1077,7 +1085,7 @@ def test3():
         cache_list.append(cache)
 
     for i in range(NUM_PROCESSORS):
-        cache = cache_list[random.randint(0, NUM_CACHES - 1)]
+        cache = cache_list[processor_cache_index[i]]
         register_set = get_register_set(NUM_REGISTER_CELLS, cache, system_manager)
         register_list.append(register_set)
         register_cache_dic[register_set] = cache    
