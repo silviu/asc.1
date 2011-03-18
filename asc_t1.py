@@ -1,12 +1,14 @@
 from threading import *
 from asc_t1_defs import *
 from barrier import *
+import echo
 
 global barrier, N_Threads, IDLE, BUSY
 N_Threads = 0
 barrier = ReBarrier(N_Threads + 1)
 IDLE = 0
 BUSY = 1
+EXIT_TIME = False
 
 class Ram(GenericRAM):
 	
@@ -16,45 +18,58 @@ class Ram(GenericRAM):
 		self.num_ram_requests_per_time_step = num_ram_requests_per_time_step
 		self.system_manager = system_manager
 		self.ram = [None] * num_ram_cells
+		self.rid = 0
 		
 		self.curr_req = []
 		self.old_req = []
 	
 	
 	# Sets RAM cell at addr address to value
+	@echo.echo
 	def set_cell_value(self, addr, value):
 		self.ram[addr] = value
 	
 	
 	# Returns the RAM value at addr address
+	@echo.echo
 	def get_cell_value(self, addr):
 		return self.ram[addr]
 		
 	
 	# Accepts requests from the CACHE
+	@echo.echo
 	def request(self, addr, cache):
 		self.curr_req.append((addr, cache))
 	
 	
 	#Responds to every CACHE for their previous requests
+	@echo.echo
 	def respond_requests(self):
 		for req in self.old_req:
 			addr  = req[0]
 			value = get_cell_value(req[0])
 			cache = req[1]
 			cache.get_answer_from_Ram(addr, value)
+			self.rid += 1
+			self.system_manager.ram_notify_submit_answer(cache, self.rid, addr)
 	
 	# Prepares the lists for a new time step
+	@echo.echo
 	def prepare_lists(self):
 		self.old_req = self.curr_req
 		self.curr_req = []
 	
-	
+	@echo.echo
 	def run(self):
 		self.system_manager.register_ram(self)
-		self.respond_requests()
-		self.prepare_lists()
-		barrier.sync()
+		global EXIT_TIME
+		while(1):
+			if EXIT_TIME:
+				return
+			if len(self.old_req) > 0:
+				self.respond_requests()
+				self.prepare_lists()
+			barrier.sync()
 		
 
 
@@ -65,6 +80,8 @@ class Cache(GenericCache):
 		self.ram = ram
 		self.system_manager = system_manager
 		self.cache = [None] * num_cache_cells
+		self.ram_rid = 0
+		self.reg_rid = 0
 		
 		self.curr_answer = []
 		self.old_answer = []
@@ -75,6 +92,7 @@ class Cache(GenericCache):
 	# Tries to get the value from the CACHE at "addr" address
 	# If the "addr" address is not mapped in the cache
 	# the function returns "None"
+	@echo.echo
 	def get_cell_value(self, addr):
 		for cache_cell in self.cache:
 			if cache_cell[0] == addr:
@@ -84,23 +102,28 @@ class Cache(GenericCache):
 	# Tries to find the mapped address of the RAM address "addr" 
 	# in the CACHE. If there is no mapping for this adress, 
 	# it is added to the CACHE
+	@echo.echo
 	def set_cell_value(self, addr, value):
-		for cache_cell in self.cache:
+		for i, cache_cell in enumerate(self.cache):
 			if cache_cell[0] == addr:
 				cache_cell[1] = value
-				return
+				return i
 		self.cache.append([addr, value])
+		return len(self.cache)
 	
 	# This method will be called from the RAM
 	# It receives answers to previous requests from the RAM
+	@echo.echo
 	def get_answer_from_Ram(self, addr, value):
 		curr_answer.append([addr, value])	
 	
 	# Accepts requests from REGISTERS and it adds them to a queue
+	@echo.echo
 	def request(self, addr, register):
 		self.curr_req.append([addr, register])
 	
 	# Responds to each REGISTER for its request
+	@echo.echo
 	def respond_requests(self):
 		for req in self.old_req:
 			addr  = req[0]
@@ -113,32 +136,46 @@ class Cache(GenericCache):
 			# processed at the next time step
 			if (value == None):
 				self.ram.request(addr, self)
+				self.ram_rid += 1
+				self.system_manager.cache_notify_submit_request(self.ram_rid, addr)
 				self.curr_req.append([addr, register])
 			# If the value is in the CACHE send it to the REGISTER
 			else:
 				register.get_answer_from_Cache(addr, value)
+				self.reg_rid += 1
+				self.system_manager.cache_notify_submit_answer(register.register_set, self.reg_rid, addr)
 	
 	
 	# Inserts the values it got from the RAM into the CACHE
+	@echo.echo
 	def process_ram_answers(self):
 		for answer in self.old_answer:
-			self.set_cell_value(answer[0], answer[1])
+			position = self.set_cell_value(answer[0], answer[1])
+			self.system_manager.cache_notify_store_value(position, answer[0])
 	
 	
-	# Prepares the lists for a new time step	
+	# Prepares the lists for a new time step
+	@echo.echo
 	def prepare_lists(self):
 		self.old_answer = self.curr_answer
 		self.curr_answer = []
 		self.old_req = self.curr_req
 		self.curr_req = []
-	
+
+	@echo.echo
 	def run(self):
 		self.system_manager.register_cache(self)
-		self.respond_requests()
-		self.process_ram_answers()
-		self.prepare_lists()
+		global EXIT_TIME
+		while(1):
+			if EXIT_TIME:
+				return
+			if len(self.old_req) > 0:
+				self.respond_requests()
+			if len(self.old_answer) > 0:
+				self.process_ram_answers()
+				self.prepare_lists()
 			
-		barrier.sync()
+			barrier.sync()
 
 
 class RegisterSet(GenericRegisterSet):
@@ -148,6 +185,7 @@ class RegisterSet(GenericRegisterSet):
 		self.cache = cache
 		self.system_manager = system_manager
 		self.register_set = num_register_cells * [None]
+		self.rid = 0
 		
 		self.curr_req = []
 		self.old_req  = []
@@ -158,6 +196,7 @@ class RegisterSet(GenericRegisterSet):
 	# Tries to get the value from the REGISTER at "addr" address
 	# If the "addr" address is not mapped in the REGISTER
 	# the function returns "None"
+	@echo.echo
 	def get_cell_value(self, addr):
 		for register_cell in self.register_set:
 			if register_cell[0] == addr:
@@ -167,26 +206,33 @@ class RegisterSet(GenericRegisterSet):
 	# Tries to find the mapped address of the RAM address "addr" 
 	# in the REGISTER. If there is no mapping for this adress, 
 	# it is added to the REGISTER
+	@echo.echo
 	def set_cell_value(self, addr, value):
-		for register_cell in self.register_set:
+		for i, register_cell in enumerate(self.register_set):
 			if register_cell[0] == addr:
 				register_cell[1] = value
-				return
+				return i
 		self.register_set.append([addr, value])
+		return len(register_set)
 	
 	# Accepts requests from the processor it is connected to
+	@echo.echo
 	def request(self, addr, processor):
 		curr_req.append([addr, processor])
 
+	@echo.echo
 	def get_answer_from_Cache(self, addr, value):
 		curr_answer.append([addr, value])
 	
+	@echo.echo
 	def process_cache_answers(self):
 		for answer in self.old_answer:
-			self.set_cell_value(answer[0], answer[1])
+			position = self.set_cell_value(answer[0], answer[1])
+			self.system_manager.register_set_notify_store_value(position, answer[0])
 			
 	
 	# Responds to the Processor for its request
+	@echo.echo
 	def respond_requests(self):
 		for req in self.old_req:
 			addr  = req[0]
@@ -199,24 +245,35 @@ class RegisterSet(GenericRegisterSet):
 			# processed at the next time step
 			if (value == None):
 				self.cache.request(addr, self)
+				self.rid += 1
+				self.system_manager.register_set_notify_submit_request(self.cache, self.rid, addr)
 				self.curr_req.append([addr, processor])
 			# If the value is in the REGISTER send it to the PROCESSOR
 			else:
 				processor.get_answer_from_Register(addr, value)
+				self.rid += 1
+				self.system_manager.register_set_notify_submit_answer(processor, self.rid, addr)
 	
 	# Prepares the lists for a new time step	
+	@echo.echo
 	def prepare_lists(self):
 		self.old_answer = self.curr_answer
 		self.curr_answer = []
 		self.old_req = self.curr_req
 		self.curr_req = []
-	
+	@echo.echo
 	def run(self):
 		self.system_manager.register_register_set(self)
-		self.respond_requests()
-		self.process_cache_answers()
-		self.prepare_lists()
-		barrier.sync()
+		global EXIT_TIME
+		while(1):
+			if EXIT_TIME:
+				return
+			if len(self.old_req) > 0:
+				self.respond_requests()
+			if len(self.old_answer) > 0:
+				self.process_cache_answers()
+				self.prepare_lists()
+			barrier.sync()
 
 
 class Processor(GenericProcessor):
@@ -226,24 +283,28 @@ class Processor(GenericProcessor):
 		self.register_set = register_set
 		self.system_manager = system_manager
 		self.state = IDLE
+		self.rid = 0
 		
 		self.curr_proc = []
 		self.old_proc = []
 		
 		self.register_answers = []
 		
+	@echo.echo
 	def get_process_number(self):
 		return len(curr_proc)
 		
 	# This method is called by the ProcessScheduler
 	# and it adds a new process in the queue
+	@echo.echo
 	def add_processes(self, process):
 		curr_proc.append(process)
 		
-	
+	@echo.echo
 	def get_answer_from_Register(self, addr, value):
 		register_answers.append([addr, value])
 	
+	@echo.echo
 	def is_in_answers(self, addr):
 		for answer in register_answers:
 			if answer[0] == addr:
@@ -252,6 +313,7 @@ class Processor(GenericProcessor):
 	
 	# Returns the maximum number of operations
 	# a process has done 
+	@echo.echo
 	def get_max_operations(self):
 		max_op = 0
 		for proc in self.old_proc:
@@ -262,6 +324,7 @@ class Processor(GenericProcessor):
 	
 	# Returns a process from the process list to be run next
 	# It is chosen by the max number of operations it already has done
+	@echo.echo
 	def get_process_to_run(self):
 		max_op = self.get_max_operations()
 		
@@ -271,6 +334,7 @@ class Processor(GenericProcessor):
 				return proc
 	
 	# Implements the behavour of the PROCESSOR
+	@echo.echo
 	def run_process(self):
 		self.process = self.get_process_to_run()
 		if self.process == None:
@@ -286,14 +350,19 @@ class Processor(GenericProcessor):
 				
 				if not self.is_in_answers(addr1):
 					self.register_set.request(addr1, self)
+					self.rid += 1
+					self.system_manager.processor_notify_submit_request(self.register_set, self.rid, self.addr1)
 				if not self.is_in_answers(addr2):
 					self.register_set.request(addr2, self)
+					self.rid += 1
+					self.system_manager.processor_notify_submit_request(self.register_set, self.rid, addr2)
 				
 				self.state = BUSY
 		
 		elif self.state == BUSY:
 			self.get_answer_from_Register()
 			if len(self.register_answers) == 2:
+				self.system_manager.processor_notify_start_executing_next_operation(self.process) 
 				if operand == "+":
 					x = 0
 					for answer in register_answers:
@@ -302,11 +371,19 @@ class Processor(GenericProcessor):
 					x = 1
 					for answer in register_answers:
 						x *= answer[1]
+				self.process.inc_number_of_executed_operations
+				self.system_manager.processor_notify_finish_executing_operation(x)
+				self.state = IDLE
 	
+	@echo.echo
 	def run(self):
 		self.system_manager.register_processor(self)
-		self.run_process()
-		barrier.sync()
+		global EXIT_TIME
+		while(1):
+			if EXIT_TIME:
+				return
+			self.run_process()
+			barrier.sync()
 
 
 class ProcessScheduler(GenericProcessScheduler):
@@ -317,10 +394,12 @@ class ProcessScheduler(GenericProcessScheduler):
 		
 		self.old_proc  = []
 		self.curr_proc = []
-
+	
+	@echo.echo
 	def submit_process(self, process):
 		self.curr_proc.append(process)
 
+	@echo.echo
 	def get_processor(self):
 		min_proc = sys.maxint
 		for process in processor_list:
@@ -328,21 +407,29 @@ class ProcessScheduler(GenericProcessScheduler):
 				min_proc = process.get_process_number()
 				saved_process = process
 		return saved_process
-
+	
+	@echo.echo
 	def schedule_processes(self):
 		for process in self.old_proc:
 			processor = self.get_processor()
 			processor.add_processes(process)
+			self.system_manager.scheduler_notify_submit_process(processor, process)
 
-	# Prepares the lists for a new time step	
+	# Prepares the lists for a new time step
+	@echo.echo	
 	def prepare_lists(self):
 		self.old_proc = self.curr_proc
 		self.curr_proc = []
-
+	
+	@echo.echo
 	def run(self):
 		self.system_manager.register_scheduler(self)
-		self.schedule_processes()
-		barrier.sync()
+		global EXIT_TIME
+		while(1):
+			if EXIT_TIME:
+				return
+			self.schedule_processes()
+			barrier.sync()
 
 
 def todo(function):
@@ -385,5 +472,7 @@ def wait_for_next_time_step(object, done):
 		object.increase_time_step()
 
 	if done == 1:
+		global EXIT_TIME
+		EXIT_TIME = True
 		exit()
 
