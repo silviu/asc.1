@@ -3,7 +3,7 @@ from threading import *
 class Synced_list():
 	
 	def __init__(self, length):
-		self.lock = RLock()
+		self.lock = Lock()
 		self.list = length * [None]
 	
 	def append(self, elem):
