@@ -461,7 +461,7 @@ class ProcessScheduler(GenericProcessScheduler):
 		self.processor_list = processor_list
 		self.system_manager = system_manager
 		
-		self.old_proc  = Synced_list()
+		self.old_proc  = []
 		self.curr_proc = Synced_list()
 	
 	@echo.echo
@@ -479,7 +479,7 @@ class ProcessScheduler(GenericProcessScheduler):
 	
 	@echo.echo
 	def schedule_processes(self):
-		for process in self.old_proc.list:
+		for process in self.old_proc:
 			processor = self.get_processor()
 			processor.add_processes(process)
 			self.system_manager.scheduler_notify_submit_process(processor, process)
@@ -487,7 +487,7 @@ class ProcessScheduler(GenericProcessScheduler):
 	# Prepares the lists for a new time step
 	@echo.echo	
 	def prepare_lists(self):
-		self.old_proc.list = self.curr_proc.list
+		self.old_proc = self.curr_proc.list
 		self.curr_proc.list = []
 	
 	@echo.echo
@@ -506,7 +506,7 @@ class ProcessScheduler(GenericProcessScheduler):
 			
 			# Replying to requests
 			barrier.sync()
-			if self.old_proc.get_len() > 0:
+			if len(self.old_proc) > 0:
 				self.schedule_processes()
 				self.prepare_lists()
 			elif self.curr_proc.get_len() > 0:
