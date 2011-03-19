@@ -2,6 +2,7 @@ from threading import *
 from asc_t1_defs import *
 from barrier import *
 import echo
+import sys
 
 global barrier, N_Threads, IDLE, BUSY
 N_Threads = 0
@@ -66,9 +67,22 @@ class Ram(GenericRAM):
 		while(1):
 			if EXIT_TIME:
 				return
+			# Accepting requests
+			barrier.sync()
+			
+			# Processing requests
+			barrier.sync()
+			
+			# Replying to requests
+			barrier.sync()
 			if len(self.old_req) > 0:
 				self.respond_requests()
 				self.prepare_lists()
+			
+			# Processing answers
+			barrier.sync()
+			
+			# wait_for_next_time_step
 			barrier.sync()
 		
 
@@ -169,12 +183,25 @@ class Cache(GenericCache):
 		while(1):
 			if EXIT_TIME:
 				return
+			
+			# Accepting requests
+			barrier.sync()
+			
+			# Processing requests
+			barrier.sync()
+			
+			# Replying to requests
+			barrier.sync()
 			if len(self.old_req) > 0:
 				self.respond_requests()
+				
+			# Processing answers
+			barrier.sync()
 			if len(self.old_answer) > 0:
 				self.process_ram_answers()
 				self.prepare_lists()
 			
+			# wait_for_next_time_step
 			barrier.sync()
 
 
@@ -218,11 +245,11 @@ class RegisterSet(GenericRegisterSet):
 	# Accepts requests from the processor it is connected to
 	@echo.echo
 	def request(self, addr, processor):
-		curr_req.append([addr, processor])
+		self.curr_req.append([addr, processor])
 
 	@echo.echo
 	def get_answer_from_Cache(self, addr, value):
-		curr_answer.append([addr, value])
+		self.curr_answer.append([addr, value])
 	
 	@echo.echo
 	def process_cache_answers(self):
@@ -261,6 +288,7 @@ class RegisterSet(GenericRegisterSet):
 		self.curr_answer = []
 		self.old_req = self.curr_req
 		self.curr_req = []
+		
 	@echo.echo
 	def run(self):
 		self.system_manager.register_register_set(self)
@@ -268,11 +296,25 @@ class RegisterSet(GenericRegisterSet):
 		while(1):
 			if EXIT_TIME:
 				return
+			
+			# Accepting requests
+			barrier.sync()
+			
+			# Processing requests
+			barrier.sync()
+			
+			# Replying to requests
+			barrier.sync()
 			if len(self.old_req) > 0:
 				self.respond_requests()
+
+			# Processing answers
+			barrier.sync()
 			if len(self.old_answer) > 0:
 				self.process_cache_answers()
 				self.prepare_lists()
+				
+			# wait_for_next_time_step
 			barrier.sync()
 
 
@@ -292,13 +334,13 @@ class Processor(GenericProcessor):
 		
 	@echo.echo
 	def get_process_number(self):
-		return len(curr_proc)
+		return len(self.curr_proc)
 		
 	# This method is called by the ProcessScheduler
 	# and it adds a new process in the queue
 	@echo.echo
 	def add_processes(self, process):
-		curr_proc.append(process)
+		self.curr_proc.append(process)
 		
 	@echo.echo
 	def get_answer_from_Register(self, addr, value):
@@ -306,7 +348,7 @@ class Processor(GenericProcessor):
 	
 	@echo.echo
 	def is_in_answers(self, addr):
-		for answer in register_answers:
+		for answer in self.register_answers:
 			if answer[0] == addr:
 				return True
 		return False
@@ -341,40 +383,47 @@ class Processor(GenericProcessor):
 			return
 		self.num_operations = self.process.get_number_of_operations()
 		if self.state == IDLE:
-			for i in range(num_operations):
-				self.operation = process.get_operation(i)
+			print "\n\n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!``````IDLEEEE````````!!!!!!!!!!!!!!!!!!!\n\n"
+			for i in range(self.num_operations):
+				self.operation = self.process.get_operation(i)
 				
-				self.operand = operation[0]
-				self.addr1   = operation[1]
-				self.addr2   = operation[2]
+				self.operand = self.operation[0]
+				self.addr1   = self.operation[1]
+				self.addr2   = self.operation[2]
 				
-				if not self.is_in_answers(addr1):
-					self.register_set.request(addr1, self)
+				if not self.is_in_answers(self.addr1):
+					self.register_set.request(self.addr1, self)
 					self.rid += 1
 					self.system_manager.processor_notify_submit_request(self.register_set, self.rid, self.addr1)
-				if not self.is_in_answers(addr2):
-					self.register_set.request(addr2, self)
+				if not self.is_in_answers(self.addr2):
+					self.register_set.request(self.addr2, self)
 					self.rid += 1
-					self.system_manager.processor_notify_submit_request(self.register_set, self.rid, addr2)
+					self.system_manager.processor_notify_submit_request(self.register_set, self.rid, self.addr2)
 				
 				self.state = BUSY
 		
 		elif self.state == BUSY:
-			self.get_answer_from_Register()
+			print "\n\n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!``````BUSYYY````````!!!!!!!!!!!!!!!!!!!\n\n"
 			if len(self.register_answers) == 2:
 				self.system_manager.processor_notify_start_executing_next_operation(self.process) 
-				if operand == "+":
+				if self.operand == "+":
 					x = 0
-					for answer in register_answers:
+					for answer in self.register_answers:
 						x += answer[1]
-				elif operand == "*":
+				elif selfoperand == "*":
 					x = 1
-					for answer in register_answers:
+					for answer in self.register_answers:
 						x *= answer[1]
-				self.process.inc_number_of_executed_operations
+				self.process.inc_number_of_executed_operations()
 				self.system_manager.processor_notify_finish_executing_operation(x)
 				self.state = IDLE
 	
+	# Prepares the lists for a new time step
+	@echo.echo
+	def prepare_lists(self):
+		self.old_proc = self.curr_proc
+		self.curr_proc = []
+
 	@echo.echo
 	def run(self):
 		self.system_manager.register_processor(self)
@@ -382,7 +431,25 @@ class Processor(GenericProcessor):
 		while(1):
 			if EXIT_TIME:
 				return
-			self.run_process()
+			
+			# Accepting requests
+			barrier.sync()
+			
+			# Processing requests
+			barrier.sync()
+			
+			# Replying to requests
+			barrier.sync()
+			if len(self.old_proc) > 0:
+				self.run_process()
+				self.prepare_lists()
+			elif len(self.curr_proc) > 0:
+				self.prepare_lists()
+			
+			# Process answers
+			barrier.sync()
+			
+			# wait_for_next_time_step
 			barrier.sync()
 
 
@@ -402,7 +469,7 @@ class ProcessScheduler(GenericProcessScheduler):
 	@echo.echo
 	def get_processor(self):
 		min_proc = sys.maxint
-		for process in processor_list:
+		for process in self.processor_list:
 			if process.get_process_number() < min_proc:
 				min_proc = process.get_process_number()
 				saved_process = process
@@ -428,12 +495,26 @@ class ProcessScheduler(GenericProcessScheduler):
 		while(1):
 			if EXIT_TIME:
 				return
-			self.schedule_processes()
+			
+			# Accepting requests
 			barrier.sync()
-
-
-def todo(function):
-	print "~~~~~TODO: " + function + " ~~~~~"
+			
+			# Processing requests
+			barrier.sync()
+			
+			# Replying to requests
+			barrier.sync()
+			if len(self.old_proc) > 0:
+				self.schedule_processes()
+				self.prepare_lists()
+			elif len(self.curr_proc) > 0:
+					self.prepare_lists()
+					
+			# Process answers
+			barrier.sync()
+			
+			# wait_for_next_time_step
+			barrier.sync()
 
 def init():
 	pass
