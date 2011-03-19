@@ -69,7 +69,7 @@ class Ram(GenericRAM):
 		self.rid = 0
 		
 		self.curr_req = Synced_list()
-		self.old_req = Synced_list()
+		self.old_req = []
 	
 	
 	# Sets RAM cell at addr address to value
@@ -94,7 +94,7 @@ class Ram(GenericRAM):
 	#Responds to every CACHE for their previous requests
 	##@echo.echo
 	def respond_requests(self):
-		for req in self.old_req.list:
+		for req in self.old_req:
 			addr  = req[0]
 			value = get_cell_value(req[0])
 			cache = req[1]
@@ -106,7 +106,7 @@ class Ram(GenericRAM):
 	# Prepares the lists for a new time step
 	##@echo.echo
 	def prepare_lists(self):
-		self.old_req.list = self.curr_req.list
+		self.old_req = self.curr_req.list
 		self.curr_req.list = []
 	
 	##@echo.echo
@@ -124,7 +124,7 @@ class Ram(GenericRAM):
 			
 			# Replying to requests
 			barrier.end_reply_requests(self)
-			if self.old_req.get_len() > 0:
+			if len(self.old_req) > 0:
 				self.respond_requests()
 				self.prepare_lists()
 			
@@ -144,10 +144,10 @@ class Cache(GenericCache):
 		self.reg_rid = 0
 		
 		self.curr_answer = Synced_list()
-		self.old_answer = Synced_list()
+		self.old_answer = []
 		
 		self.curr_req = Synced_list()
-		self.old_req = Synced_list()
+		self.old_req = []
 	
 	# Tries to get the value from the CACHE at "addr" address
 	# If the "addr" address is not mapped in the cache
@@ -187,7 +187,7 @@ class Cache(GenericCache):
 	# Responds to each REGISTER for its request
 	#@echo.echo
 	def respond_requests(self):
-		for req in self.old_req.list:
+		for req in self.old_req:
 			addr  = req[0]
 			value = get_cell_value(req[0])
 			register = req[1]
@@ -212,7 +212,7 @@ class Cache(GenericCache):
 	# Inserts the values it got from the RAM into the CACHE
 	#@echo.echo
 	def process_ram_answers(self):
-		for answer in self.old_answer.list:
+		for answer in self.old_answer:
 			dbg("~~~~~~CACHE " + str(self) + " is processing answers from RAM addr= " + str(addr) + " value= " + str(value))
 			position = self.set_cell_value(answer[0], answer[1])
 			self.system_manager.cache_notify_store_value(position, answer[0])
@@ -221,9 +221,9 @@ class Cache(GenericCache):
 	# Prepares the lists for a new time step
 	#@echo.echo
 	def prepare_lists(self):
-		self.old_answer.list = self.curr_answer.list
+		self.old_answer = self.curr_answer.list
 		self.curr_answer.list = []
-		self.old_req.list = self.curr_req.list
+		self.old_req = self.curr_req.list
 		self.curr_req.list = []
 
 	#@echo.echo
@@ -241,13 +241,13 @@ class Cache(GenericCache):
 			barrier.end_process_requests(self)
 			
 			# Replying to requests
-			if self.old_req.get_len() > 0:
+			if len(self.old_req) > 0:
 				self.respond_requests()
 			barrier.end_reply_requests(self)
 			
 				
 			# Processing answers
-			if self.old_answer.get_len() > 0:
+			if len(self.old_answer) > 0:
 				self.process_ram_answers()
 				self.prepare_lists()
 			barrier.end_process_answers(self)
@@ -264,10 +264,10 @@ class RegisterSet(GenericRegisterSet):
 		self.rid = 0
 		
 		self.curr_req = Synced_list()
-		self.old_req  = Synced_list()
+		self.old_req  = []
 		
 		self.curr_answer = Synced_list()
-		self.old_answer  = Synced_list()
+		self.old_answer  = []
 		
 	# Tries to get the value from the REGISTER at "addr" address
 	# If the "addr" address is not mapped in the REGISTER
@@ -304,7 +304,7 @@ class RegisterSet(GenericRegisterSet):
 	
 	#@echo.echo
 	def process_cache_answers(self):
-		for answer in self.old_answer.list:
+		for answer in self.old_answer:
 			dbg("~~~~~~REGISTER " + str(self) + " is processing answer from CACHE for addr= " + str(answer[0]) + " value= " + str(answr[1]))
 			position = self.set_cell_value(answer[0], answer[1])
 			self.system_manager.register_set_notify_store_value(position, answer[0])
@@ -313,7 +313,7 @@ class RegisterSet(GenericRegisterSet):
 	# Responds to the Processor for its request
 	#@echo.echo
 	def respond_requests(self):
-		for req in self.old_req.list:
+		for req in self.old_req:
 			addr  = req[0]
 			value = get_cell_value(req[0])
 			processor = req[1]
@@ -339,9 +339,9 @@ class RegisterSet(GenericRegisterSet):
 	# Prepares the lists for a new time step	
 	#@echo.echo
 	def prepare_lists(self):
-		self.old_answer.list = self.curr_answer.list
+		self.old_answer = self.curr_answer.list
 		self.curr_answer.list = []
-		self.old_req.list = self.curr_req.list
+		self.old_req = self.curr_req.list
 		self.curr_req.list = []
 		
 	#@echo.echo
@@ -359,12 +359,12 @@ class RegisterSet(GenericRegisterSet):
 			barrier.end_process_requests(self)
 			
 			# Replying to requests
-			if self.old_req.get_len() > 0:
+			if len(self.old_req) > 0:
 				self.respond_requests()
 			barrier.end_reply_requests(self)
 
 			# Processing answers
-			if self.old_answer.get_len() > 0:
+			if len(self.old_answer) > 0:
 				self.process_cache_answers()
 				self.prepare_lists()
 			barrier.end_process_answers(self)
@@ -381,7 +381,7 @@ class Processor(GenericProcessor):
 		self.rid = 0
 		
 		self.curr_proc = Synced_list()
-		self.old_proc = Synced_list()
+		self.old_proc = []
 		
 		self.register_answers = Synced_list()
 		
@@ -413,7 +413,7 @@ class Processor(GenericProcessor):
 	#@echo.echo
 	def get_max_operations(self):
 		max_op = 0
-		for proc in self.old_proc.list:
+		for proc in self.old_proc:
 			curr_op = proc.get_number_of_executed_operations()
 			if curr_op > max_op:
 				max_op = curr_op
@@ -425,7 +425,7 @@ class Processor(GenericProcessor):
 	def get_process_to_run(self):
 		max_op = self.get_max_operations()
 		
-		for proc in self.old_proc.list:
+		for proc in self.old_proc:
 			curr_op = proc.get_number_of_executed_operations()
 			if curr_op == max_op:
 				return proc
@@ -476,7 +476,7 @@ class Processor(GenericProcessor):
 	# Prepares the lists for a new time step
 	#@echo.echo
 	def prepare_lists(self):
-		self.old_proc.list = self.curr_proc.list
+		self.old_proc = self.curr_proc.list
 		self.curr_proc.list = []
 
 	#@echo.echo
@@ -488,7 +488,7 @@ class Processor(GenericProcessor):
 				return
 			
 			# Accepting requests
-			if self.old_proc.get_len() > 0:
+			if len(self.old_proc) > 0:
 				self.run_process()
 			barrier.end_requests(self)
 			
