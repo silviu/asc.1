@@ -70,19 +70,19 @@ class Ram(GenericRAM):
 			if EXIT_TIME:
 				return
 			# Accepting requests
-			barrier.sync()
+			barrier.end_requests(self)
 			
 			# Processing requests
-			barrier.sync()
+			barrier.end_process_requests(self)
 			
 			# Replying to requests
-			barrier.sync()
+			barrier.end_reply_requests(self)
 			if self.old_req.get_len() > 0:
 				self.respond_requests()
 				self.prepare_lists()
 			
 			# Processing answers
-			barrier.sync()
+			barrier.end_process_answers(self)
 			
 			# wait_for_next_time_step
 			barrier.sync()
@@ -187,18 +187,18 @@ class Cache(GenericCache):
 				return
 			
 			# Accepting requests
-			barrier.sync()
+			barrier.end_requests(self)
 			
 			# Processing requests
-			barrier.sync()
+			barrier.end_process_requests(self)
 			
 			# Replying to requests
-			barrier.sync()
+			barrier.end_reply_requests(self)
 			if self.old_req.get_len() > 0:
 				self.respond_requests()
 				
 			# Processing answers
-			barrier.sync()
+			barrier.end_process_answers(self)
 			if self.old_answer.get_len() > 0:
 				self.process_ram_answers()
 				self.prepare_lists()
@@ -300,18 +300,18 @@ class RegisterSet(GenericRegisterSet):
 				return
 			
 			# Accepting requests
-			barrier.sync()
+			barrier.end_requests(self)
 			
 			# Processing requests
-			barrier.sync()
+			barrier.end_process_requests(self)
 			
 			# Replying to requests
-			barrier.sync()
+			barrier.end_reply_requests(self)
 			if self.old_req.get_len() > 0:
 				self.respond_requests()
 
 			# Processing answers
-			barrier.sync()
+			barrier.end_process_answers(self)
 			if self.old_answer.get_len() > 0:
 				self.process_cache_answers()
 				self.prepare_lists()
@@ -435,13 +435,13 @@ class Processor(GenericProcessor):
 				return
 			
 			# Accepting requests
-			barrier.sync()
+			barrier.end_requests(self)
 			
 			# Processing requests
-			barrier.sync()
+			barrier.end_process_requests(self)
 			
 			# Replying to requests
-			barrier.sync()
+			barrier.end_reply_requests(self)
 			if self.old_proc.get_len() > 0:
 				self.run_process()
 				self.prepare_lists()
@@ -449,7 +449,7 @@ class Processor(GenericProcessor):
 				self.prepare_lists()
 			
 			# Process answers
-			barrier.sync()
+			barrier.end_process_answers(self)
 			
 			# wait_for_next_time_step
 			barrier.sync()
@@ -499,13 +499,13 @@ class ProcessScheduler(GenericProcessScheduler):
 				return
 			
 			# Accepting requests
-			barrier.sync()
+			barrier.end_requests(self)
 			
 			# Processing requests
-			barrier.sync()
+			barrier.end_process_requests(self)
 			
 			# Replying to requests
-			barrier.sync()
+			barrier.end_reply_requests(self)
 			if len(self.old_proc) > 0:
 				self.schedule_processes()
 				self.prepare_lists()
@@ -513,7 +513,7 @@ class ProcessScheduler(GenericProcessScheduler):
 					self.prepare_lists()
 					
 			# Process answers
-			barrier.sync()
+			barrier.end_process_answers(self)
 			
 			# wait_for_next_time_step
 			barrier.sync()
@@ -551,8 +551,12 @@ def get_process_scheduler(processor_list, system_manager):
 def wait_for_next_time_step(object, done):
 	
 	if done == 0:
-		barrier.sync()
+		barrier.end_requests(object)
+		barrier.end_process_requests(object)
+		barrier.end_reply_requests(object)
+		barrier.end_process_answers(object)
 		object.increase_time_step()
+
 
 	if done == 1:
 		global EXIT_TIME

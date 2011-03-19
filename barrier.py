@@ -8,6 +8,22 @@ class ReBarrier:
 	def sync(self):
 		self.b1.sync()
 		self.b2.sync()
+	
+	def end_requests(self, whom):
+		print "Thread " + str(whom) + " finished waiting for requests"
+		self.sync()
+	
+	def end_process_requests(self, whom):
+		print "Thread " + str(whom) + " finished processing requests"
+		self.sync()
+	
+	def end_reply_requests(self, whom):
+		print "Thread " + str(whom) + " finished replying to requests"
+		self.sync()
+	
+	def end_process_answers(self, whom):
+		print "Thread " + str(whom) + " finished processing answers"
+		self.sync()
 
 class Barrier:
 	def __init__(self, nr_threads):
