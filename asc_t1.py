@@ -84,9 +84,6 @@ class Ram(GenericRAM):
 			# Processing answers
 			barrier.end_process_answers(self)
 			
-			# wait_for_next_time_step
-			barrier.sync()
-		
 
 
 class Cache(GenericCache):
@@ -203,9 +200,6 @@ class Cache(GenericCache):
 				self.process_ram_answers()
 				self.prepare_lists()
 			
-			# wait_for_next_time_step
-			barrier.sync()
-
 
 class RegisterSet(GenericRegisterSet):
 	def __init__(self, num_register_cells, cache, system_manager):
@@ -316,9 +310,6 @@ class RegisterSet(GenericRegisterSet):
 				self.process_cache_answers()
 				self.prepare_lists()
 				
-			# wait_for_next_time_step
-			barrier.sync()
-
 
 class Processor(GenericProcessor):
 	global IDLE, BUSY
@@ -451,9 +442,6 @@ class Processor(GenericProcessor):
 			# Process answers
 			barrier.end_process_answers(self)
 			
-			# wait_for_next_time_step
-			barrier.sync()
-
 
 class ProcessScheduler(GenericProcessScheduler):
 	def __init__(self, processor_list, system_manager):
@@ -515,8 +503,6 @@ class ProcessScheduler(GenericProcessScheduler):
 			# Process answers
 			barrier.end_process_answers(self)
 			
-			# wait_for_next_time_step
-			barrier.sync()
 
 def init():
 	pass
