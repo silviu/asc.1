@@ -9,7 +9,7 @@ from asc_t1 import *
 
 __TOTAL_POINTS = 0
 StdOutLock = Lock()
-DEBUG_MODE = 0
+DEBUG_MODE = 1
 PRINT_STATISTICS = 0
 
 class SystemManager(Thread):
