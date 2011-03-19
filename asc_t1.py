@@ -324,8 +324,9 @@ class RegisterSet(GenericRegisterSet):
 			# request the value from the CACHE and maintain
 			# de request in the curr_req so that it will be
 			# processed at the next time step
+			print "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA value=" + str(value)
 			if (value == None):
-				self.cache.request(addr, self)
+				self.cache.request(addr, self)################################################################################
 				self.rid += 1
 				self.system_manager.register_set_notify_submit_request(self.cache, self.rid, addr)
 				self.curr_req.append([addr, processor])
@@ -398,7 +399,7 @@ class Processor(GenericProcessor):
 	#@echo.echo
 	def get_answer_from_Register(self, addr, value):
 		register_answers.append([addr, value])
-		dbg("~~~~~~PROCESSOR" + str(self) + " got an answer from REGISTER for addr= " + str(addr) + " value= " + str(value))
+		dbg("~~~~~~PROCESSOR" + str(self) + " received an answer from REGISTER for addr= " + str(addr) + " value= " + str(value))
 	
 	#@echo.echo
 	def is_in_answers(self, addr):
@@ -514,7 +515,7 @@ class ProcessScheduler(GenericProcessScheduler):
 	#@echo.echo
 	def submit_process(self, process):
 		self.curr_proc.append(process)
-		dbg("~~~~~~SCHEDULER " + str(self) + " got a process from SYSTEM_MANAGER; process= " + str(process))
+		dbg("~~~~~~SCHEDULER " + str(self) + " received a process from SYSTEM_MANAGER; process= " + str(process))
 
 	#@echo.echo
 	def get_processor(self):
