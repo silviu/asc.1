@@ -2,9 +2,9 @@ from threading import *
 
 class Synced_list():
 	
-	def __init__(self, length):
+	def __init__(self):
 		self.lock = Lock()
-		self.list = length * [None]
+		self.list = []
 	
 	def append(self, elem):
 		self.lock.acquire()

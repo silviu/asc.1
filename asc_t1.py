@@ -22,8 +22,8 @@ class Ram(GenericRAM):
 		self.ram = [None] * num_ram_cells
 		self.rid = 0
 		
-		self.curr_req = Synced_list(0)
-		self.old_req = Synced_list(0)
+		self.curr_req = Synced_list()
+		self.old_req = Synced_list()
 	
 	
 	# Sets RAM cell at addr address to value
@@ -94,22 +94,22 @@ class Cache(GenericCache):
 		self.num_cache_cells = num_cache_cells
 		self.ram = ram
 		self.system_manager = system_manager
-		self.cache = Synced_list(num_cache_cells)
+		self.cache = num_cache_cells * [None]
 		self.ram_rid = 0
 		self.reg_rid = 0
 		
-		self.curr_answer = Synced_list(0)
-		self.old_answer = Synced_list(0)
+		self.curr_answer = Synced_list()
+		self.old_answer = Synced_list()
 		
-		self.curr_req = Synced_list(0)
-		self.old_req = Synced_list(0)
+		self.curr_req = Synced_list()
+		self.old_req = Synced_list()
 	
 	# Tries to get the value from the CACHE at "addr" address
 	# If the "addr" address is not mapped in the cache
 	# the function returns "None"
 	@echo.echo
 	def get_cell_value(self, addr):
-		for cache_cell in self.cache.list:
+		for cache_cell in self.cache:
 			if cache_cell[0] == addr:
 				return cache_cell[1]
 		return None
@@ -119,12 +119,12 @@ class Cache(GenericCache):
 	# it is added to the CACHE
 	@echo.echo
 	def set_cell_value(self, addr, value):
-		for i, cache_cell in enumerate(self.cache.list):
+		for i, cache_cell in enumerate(self.cache):
 			if cache_cell[0] == addr:
 				cache_cell[1] = value
 				return i
 		self.cache.append([addr, value])
-		return self.cache.get_len()
+		return len(self.cache)
 	
 	# This method will be called from the RAM
 	# It receives answers to previous requests from the RAM
@@ -212,21 +212,21 @@ class RegisterSet(GenericRegisterSet):
 		self.num_register_cells = num_register_cells
 		self.cache = cache
 		self.system_manager = system_manager
-		self.register_set = Synced_list(num_register_cells)
+		self.register_set = num_register_cells * [None]
 		self.rid = 0
 		
-		self.curr_req = Synced_list(0)
-		self.old_req  = Synced_list(0)
+		self.curr_req = Synced_list()
+		self.old_req  = Synced_list()
 		
-		self.curr_answer = Synced_list(0)
-		self.old_answer  = Synced_list(0)
+		self.curr_answer = Synced_list()
+		self.old_answer  = Synced_list()
 		
 	# Tries to get the value from the REGISTER at "addr" address
 	# If the "addr" address is not mapped in the REGISTER
 	# the function returns "None"
 	@echo.echo
 	def get_cell_value(self, addr):
-		for register_cell in self.register_set.list:
+		for register_cell in self.register_set:
 			if register_cell[0] == addr:
 				return register_cell[1]
 		return None
@@ -236,7 +236,7 @@ class RegisterSet(GenericRegisterSet):
 	# it is added to the REGISTER
 	@echo.echo
 	def set_cell_value(self, addr, value):
-		for i, register_cell in enumerate(self.register_set.list):
+		for i, register_cell in enumerate(self.register_set):
 			if register_cell[0] == addr:
 				register_cell[1] = value
 				return i
@@ -328,10 +328,10 @@ class Processor(GenericProcessor):
 		self.state = IDLE
 		self.rid = 0
 		
-		self.curr_proc = Synced_list(0)
-		self.old_proc = Synced_list(0)
+		self.curr_proc = Synced_list()
+		self.old_proc = Synced_list()
 		
-		self.register_answers = Synced_list(0)
+		self.register_answers = Synced_list()
 		
 	@echo.echo
 	def get_process_number(self):
@@ -460,8 +460,8 @@ class ProcessScheduler(GenericProcessScheduler):
 		self.processor_list = processor_list
 		self.system_manager = system_manager
 		
-		self.old_proc  = Synced_list(0)
-		self.curr_proc = Synced_list(0)
+		self.old_proc  = Synced_list()
+		self.curr_proc = Synced_list()
 	
 	@echo.echo
 	def submit_process(self, process):
