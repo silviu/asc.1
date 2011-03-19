@@ -7,7 +7,7 @@ from asc_t1 import *
 
 __TOTAL_POINTS = 0
 StdOutLock = Lock()
-DEBUG_MODE = 1
+DEBUG_MODE = 0
 PRINT_STATISTICS = 0
 
 class SystemManager(Thread):
@@ -903,11 +903,11 @@ def test1():
     TMAX = 40
     TIME_LIMIT = 30.0 # sec
     
-    lop1 = [["+", 0, 3], ["+", 1, 2]]
+    lop1 = [["+", 0, 3]]
     lop2 = [["*", 0, 1], ["*", 2, 3]]
     p1 = Process(lop1)
     p2 = Process(lop2)
-    process_list = [(2, p2), (3, p1)]
+    process_list = [(3, p1)]
 
     init();
 
