@@ -190,15 +190,17 @@ class Cache(GenericCache):
 			barrier.end_process_requests(self)
 			
 			# Replying to requests
-			barrier.end_reply_requests(self)
 			if self.old_req.get_len() > 0:
 				self.respond_requests()
+			barrier.end_reply_requests(self)
+			
 				
 			# Processing answers
-			barrier.end_process_answers(self)
 			if self.old_answer.get_len() > 0:
 				self.process_ram_answers()
 				self.prepare_lists()
+			barrier.end_process_answers(self)
+			
 			
 
 class RegisterSet(GenericRegisterSet):
@@ -300,15 +302,16 @@ class RegisterSet(GenericRegisterSet):
 			barrier.end_process_requests(self)
 			
 			# Replying to requests
-			barrier.end_reply_requests(self)
 			if self.old_req.get_len() > 0:
 				self.respond_requests()
+			barrier.end_reply_requests(self)
 
 			# Processing answers
-			barrier.end_process_answers(self)
 			if self.old_answer.get_len() > 0:
 				self.process_cache_answers()
 				self.prepare_lists()
+			barrier.end_process_answers(self)
+			
 				
 
 class Processor(GenericProcessor):
@@ -426,18 +429,16 @@ class Processor(GenericProcessor):
 				return
 			
 			# Accepting requests
+			if self.old_proc.get_len() > 0:
+				self.run_process()
 			barrier.end_requests(self)
 			
 			# Processing requests
+			self.prepare_lists()
 			barrier.end_process_requests(self)
 			
 			# Replying to requests
 			barrier.end_reply_requests(self)
-			if self.old_proc.get_len() > 0:
-				self.run_process()
-				self.prepare_lists()
-			elif self.curr_proc.get_len() > 0:
-				self.prepare_lists()
 			
 			# Process answers
 			barrier.end_process_answers(self)
@@ -487,19 +488,17 @@ class ProcessScheduler(GenericProcessScheduler):
 				return
 			
 			# Accepting requests
+			if len(self.old_proc) > 0:
+				self.schedule_processes()
 			barrier.end_requests(self)
 			
 			# Processing requests
+			self.prepare_lists()
 			barrier.end_process_requests(self)
 			
 			# Replying to requests
 			barrier.end_reply_requests(self)
-			if len(self.old_proc) > 0:
-				self.schedule_processes()
-				self.prepare_lists()
-			elif self.curr_proc.get_len() > 0:
-					self.prepare_lists()
-					
+			
 			# Process answers
 			barrier.end_process_answers(self)
 			
