@@ -10,19 +10,19 @@ class ReBarrier:
 		self.b2.sync()
 	
 	def end_requests(self, whom):
-		print "Thread " + str(whom) + " finished waiting for requests"
+		print "~~PAS 1~~ Thread " + str(whom) + " finished waiting for requests"
 		self.sync()
 	
 	def end_process_requests(self, whom):
-		print "Thread " + str(whom) + " finished processing requests"
+		print "~~PAS 2~~ Thread " + str(whom) + " finished processing requests"
 		self.sync()
 	
 	def end_reply_requests(self, whom):
-		print "Thread " + str(whom) + " finished replying to requests"
+		print "~~PAS 3~~ Thread " + str(whom) + " finished replying to requests"
 		self.sync()
 	
 	def end_process_answers(self, whom):
-		print "Thread " + str(whom) + " finished processing answers"
+		print "~~PAS 4~~ Thread " + str(whom) + " finished processing answers"
 		self.sync()
 
 class Barrier:

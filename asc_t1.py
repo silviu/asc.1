@@ -1,17 +1,63 @@
 #!/usr/bin/python
 from threading import *
 from asc_t1_defs import *
-from barrier import *
 from synced_list import *
 import echo
 import sys
 
 global barrier, N_Threads, IDLE, BUSY
 N_Threads = 0
-barrier = ReBarrier(N_Threads + 1)
+
 IDLE = 0
 BUSY = 1
 EXIT_TIME = False
+
+class ReBarrier:
+	def __init__(self):
+		self.b1 = Barrier()
+		self.b2 = Barrier()
+		
+	def sync(self):
+		self.b1.sync()
+		self.b2.sync()
+	
+	def end_requests(self, whom):
+		#print "~~PAS 1~~ Thread " + str(whom) + " finished waiting for requests"
+		self.sync()
+	
+	def end_process_requests(self, whom):
+		#print "~~PAS 2~~ Thread " + str(whom) + " finished processing requests"
+		self.sync()
+	
+	def end_reply_requests(self, whom):
+		#print "~~PAS 3~~ Thread " + str(whom) + " finished replying to requests"
+		self.sync()
+	
+	def end_process_answers(self, whom):
+		#print "~~PAS 4~~ Thread " + str(whom) + " finished processing answers"
+		self.sync()
+
+class Barrier:
+	def __init__(self):
+		global N_Threads
+		self.barrier    = Semaphore(value=0)
+		self.regcritica = Semaphore(value=1)
+		self.nr_threads = N_Threads
+		self.n = 0
+ 
+	def sync(self):
+		global N_Threads
+		self.regcritica.acquire()
+		self.n += 1
+		if  self.n == N_Threads:
+			for i in range(N_Threads):
+				self.barrier.release()
+			self.n = 0
+		self.regcritica.release()
+		self.barrier.acquire()
+
+
+barrier = ReBarrier()
 
 class Ram(GenericRAM):
 	
