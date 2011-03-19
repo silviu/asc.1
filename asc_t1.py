@@ -1,3 +1,4 @@
+#!/usr/bin/python
 from threading import *
 from asc_t1_defs import *
 from barrier import *
