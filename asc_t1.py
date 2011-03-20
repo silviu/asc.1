@@ -638,7 +638,7 @@ class ProcessScheduler(GenericProcessScheduler):
 
 	#@echo.echo
 	#TODO se joaca cu lista procesorului. trebuie sincronizat
-	def get_processor(self):
+	def get_cpu(self):
 		#min_proc = sys.maxint
 		#for processor in self.processor_list:
 		#	if processor.get_process_number() < min_proc:
@@ -653,7 +653,7 @@ class ProcessScheduler(GenericProcessScheduler):
 	#@echo.echo
 	def schedule_processes(self):
 		for process in self.old_process:
-			cpu = self.get_processor()
+			cpu = self.get_cpu()
 			cpu.add_processes(process, self)  # TRIMITERE CERERE
 			self.system_manager.scheduler_notify_submit_process(cpu, process)
 
