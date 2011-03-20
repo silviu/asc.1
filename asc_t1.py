@@ -599,7 +599,7 @@ class Processor(GenericProcessor):
 			
 			# If the processor has not just started, therefore 
 			# it has something to request
-			if not self.process == None and len(self.old_proc) > 0:
+			if len(self.old_proc) > 0:
 				self.send_register_requests()
 			barrier.end_requests(self)
 			
@@ -639,11 +639,11 @@ class ProcessScheduler(GenericProcessScheduler):
 	#@echo.echo
 	def get_processor(self):
 		min_proc = sys.maxint
-		for process in self.processor_list:
-			if process.get_process_number() < min_proc:
-				min_proc = process.get_process_number()
-				saved_process = process
-		return saved_process
+		for processor in self.processor_list:
+			if processor.get_process_number() < min_proc:
+				min_proc = processor.get_process_number()
+				saved_processor = processor
+		return saved_processor
 	
 	def get_processor_info_from_Processor(self, info):
 		self.curr_proc_info.append(info)
