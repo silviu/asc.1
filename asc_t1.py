@@ -423,7 +423,7 @@ class Processor(GenericProcessor):
 		self.curr_process = Synced_list()
 		self.old_process = []
 		
-		self.register_answers = Synced_list()
+		self.register_answers = []
 		
 	#@echo.echo
 	def get_process_number(self):
@@ -444,7 +444,7 @@ class Processor(GenericProcessor):
 	
 	#@echo.echo
 	def is_in_answers(self, addr):
-		for answer in self.register_answers.list:
+		for answer in self.register_answers:
 			if answer[0] == addr:
 				return True
 		return False
@@ -489,11 +489,11 @@ class Processor(GenericProcessor):
 	
 	def get_next_operation(self):
 		if self.process == None:
-			return None
+			return
 			
 		# If there are no more operations left to run return None
 		if self.operation_index > self.process.get_number_of_operations():
-			return None
+			return
 		
 		# Get next operation
 		self.operation = self.process.get_operation(self.operation_index)
@@ -556,12 +556,12 @@ class Processor(GenericProcessor):
 				return
 			
 			print "\n\n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!``````BUSYYY````````!!!!!!!!!!!!!!!!!!!\n\n" 
-			if self.sent_register_requests == self.register_answers.get_len():
+			if self.sent_register_requests == self.len(register_answers):
 				if self.operand == "+":
-					for answer in self.register_answers.list:
+					for answer in self.register_answers:
 						self.result += answer[1]
 				elif self.operand == "*":
-					for answer in self.register_answers.list:
+					for answer in self.register_answers:
 						self.result *= answer[1]
 				
 				self.process.inc_number_of_executed_operations()
@@ -590,7 +590,7 @@ class Processor(GenericProcessor):
 		self.curr_process.list = []
 	
 	def prepare_answer_list(self):
-		self.register_answers.list =[]
+		self.register_answers = []
 	
 	#@echo.echo
 	def run(self):
