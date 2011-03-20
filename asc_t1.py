@@ -538,12 +538,13 @@ class Processor(GenericProcessor):
 	# It is chosen by the max number of operations it already has done
 	#@echo.echo
 	def get_process_to_run(self):
-		max_op = self.get_max_operations()
+		#max_op = self.get_max_operations()
 		
-		for proc in self.old_process:
-			curr_op = proc.get_number_of_executed_operations()
-			if curr_op == max_op:
-				return proc
+		#for proc in self.old_process:
+		#	curr_op = proc.get_number_of_executed_operations()
+		#	if curr_op == max_op:
+		#		return proc
+		return self.old_process[0]
 
 	
 	def send_register_requests(self):
