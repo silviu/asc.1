@@ -90,6 +90,7 @@ class Ram(GenericRAM):
 		dbg("CACHE        ] " + str(cache) + " is requesting from RAM addr= " + str(addr) + " RID = " + str(rid))
 	
 	
+	
 	#Responds to every CACHE for their previous requests
 	##@echo.echo
 	def respond_requests(self):
@@ -239,11 +240,12 @@ class Cache(GenericCache):
 	# Responds to each REGISTER for its request
 	#@echo.echo
 	def respond_requests(self):
-		for req in self.req:
-			addr  = req[0]
-			value = self.get_cell_value(req[0])
-			register = req[1]
-			reg_rid = req[2]
+		req_copy = self.req
+		for r in req_copy:
+			addr  = r[0]
+			value = self.get_cell_value(r[0])
+			register = r[1]
+			reg_rid = r[2]
 			
 			# If the value is still not in the CACHE
 			# check if it in the answers list
@@ -262,9 +264,8 @@ class Cache(GenericCache):
 			register.get_answer_from_Cache(addr, value)
 			self.remove_elem([addr, value], self.req)
 			self.remove_elem([addr, register], self.already_requested)
-			
 			self.system_manager.cache_notify_submit_answer(register, reg_rid, addr)
-	
+
 	
 	
 	# Prepares the lists for a new time step
