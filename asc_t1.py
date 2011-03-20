@@ -529,28 +529,26 @@ class Processor(GenericProcessor):
 		if self.state == IDLE:
 			print "\n\n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!``````IDLEEE````````!!!!!!!!!!!!!!!!!!!\n\n"
 			
-			# Get number of operations left
-			if not self.process == None:
-				self.operations_left = self.process.get_number_of_operations() - self.process.get_number_of_executed_operations()
-			
-			# If current process finished all its operations
-			# remove it from the processes list
-			if self.operations_left == 0:
-				self.remove_element(self.process)
-				self.process = None
-				self.operation_index = 0
-			
 			# If running the first time of if the processor finished all
 			# operations for this process get another process from the queue
 			if self.process == None:
 				self.process = self.get_process_to_run()
 				self.get_next_operation()
 				self.state = BUSY
-
-			# If the current process has multiple operations
+			
 			else:
-				self.get_next_operation()
-				self.state = BUSY
+				operations_left = self.process.get_number_of_operations() - self.process.get_number_of_executed_operations()
+			
+				# If current process finished all its operations
+				# remove it from the processes list
+				if operations_left == 0:
+					self.remove_element(self.process)
+					self.process = None
+					self.operation_index = 0
+				else:
+					self.get_next_operation()
+					self.state = BUSY
+				
 				
 		elif self.state == BUSY:
 			if self.process == None:
