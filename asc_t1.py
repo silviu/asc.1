@@ -96,7 +96,7 @@ class Ram(GenericRAM):
 	def respond_requests(self):
 		for req in self.old_req:
 			addr  = req[0]
-			value = get_cell_value(req[0])
+			value = self.get_cell_value(req[0])
 			cache = req[1]
 			cache.get_answer_from_Ram(addr, value)
 			self.rid += 1
@@ -153,6 +153,8 @@ class Cache(GenericCache):
 	#@echo.echo
 	def get_cell_value(self, addr):
 		for cache_cell in self.cache:
+			if cache_cell == None:
+				continue
 			if cache_cell[0] == addr:
 				return cache_cell[1]
 		return None
@@ -173,7 +175,7 @@ class Cache(GenericCache):
 	# It receives answers to previous requests from the RAM
 	#@echo.echo
 	def get_answer_from_Ram(self, addr, value):
-		curr_answer.append([addr, value])
+		self.curr_answer.append([addr, value])
 		dbg("~~~~~~CACHE " + str(self) + " is getting answer from RAM for addr= " + str(addr) + " value= " + str(value))
 	
 	# Accepts requests from REGISTERS and it adds them to a queue
@@ -185,7 +187,7 @@ class Cache(GenericCache):
 	def send_ram_requests(self):
 		for req in self.old_req:
 			addr  = req[0]
-			value = get_cell_value(req[0])
+			value = self.get_cell_value(req[0])
 			register = req[1]
 
 			# If the address/value is not in the CACHE
@@ -204,7 +206,7 @@ class Cache(GenericCache):
 	def respond_requests(self):
 		for req in self.old_req:
 			addr  = req[0]
-			value = get_cell_value(req[0])
+			value = self.get_cell_value(req[0])
 			register = req[1]
 			
 			# If the value is still not in the CACHE
@@ -283,6 +285,8 @@ class RegisterSet(GenericRegisterSet):
 	#@echo.echo
 	def get_cell_value(self, addr):
 		for register_cell in self.register_set:
+			if register_cell == None:
+				continue
 			if register_cell[0] == addr:
 				return register_cell[1]
 		return None
@@ -564,8 +568,9 @@ class Processor(GenericProcessor):
 					for answer in self.register_answers:
 						self.result *= answer[1]
 				
-				self.process.inc_number_of_executed_operations()
 				self.system_manager.processor_notify_finish_executing_operation(self.result)
+				self.process.inc_number_of_executed_operations()
+				self.prepare_answer_list()
 				self.state = IDLE
 	
 	
@@ -619,7 +624,6 @@ class Processor(GenericProcessor):
 			# First time it enters for both are 0
 			if len(self.old_process) > 0:
 				self.run_process()
-				self.prepare_answer_list()
 			barrier.end_process_answers(self)
 			
 
