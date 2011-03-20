@@ -209,10 +209,10 @@ class Cache(GenericCache):
 	
 	
 	def send_ram_requests(self):
-		for req in self.req:
-			addr  = req[0]
-			value = self.get_cell_value(req[0])
-			register = req[1]
+		for r in self.req:
+			addr  = r[0]
+			value = self.get_cell_value(r[0])
+			register = r[1]
 
 			# If the address/value is not in the CACHE
 			# request the value from the RAM and maintain
@@ -300,8 +300,9 @@ class Cache(GenericCache):
 				self.respond_requests()
 			barrier.end_reply_requests(self)
 			
-				
+			
 			self.prepare_answer_list()
+			print "\n[CACHE INFO   ] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer)
 			barrier.end_process_answers(self)
 			
 			
