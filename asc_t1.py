@@ -66,7 +66,6 @@ class Ram(GenericRAM):
 		self.num_ram_requests_per_time_step = num_ram_requests_per_time_step
 		self.system_manager = system_manager
 		self.ram = [None] * num_ram_cells
-		self.rid = 0
 		
 		self.sync_req = Synced_list()
 		self.req = []
@@ -86,8 +85,8 @@ class Ram(GenericRAM):
 	
 	# Accepts requests from the CACHE
 	##@echo.echo
-	def request(self, addr, cache):
-		self.sync_req.append((addr, cache))
+	def request(self, addr, cache, rid):
+		self.sync_req.append([addr, cache, rid])
 		dbg("CACHE        ] " + str(cache) + " is requesting from RAM addr= " + str(addr))
 	
 	
@@ -98,9 +97,10 @@ class Ram(GenericRAM):
 			addr  = req[0]
 			value = self.get_cell_value(req[0])
 			cache = req[1]
+			rid = req[2]
+			
 			cache.get_answer_from_Ram(addr, value)
-			self.rid += 1
-			self.system_manager.ram_notify_submit_answer(cache, self.rid, addr)
+			self.system_manager.ram_notify_submit_answer(cache, rid, addr)
 			dbg("RAM          ]" + str(self) + " is responding to CACHE for addr= " + str(addr) + " value= " + str(value))
 	
 	# Prepares the lists for a new time step
@@ -140,7 +140,7 @@ class Cache(GenericCache):
 		self.system_manager = system_manager
 		self.cache = num_cache_cells * [None]
 		self.ram_rid = 0
-		self.reg_rid = 0
+
 		
 		self.already_requested = []
 		
@@ -201,8 +201,8 @@ class Cache(GenericCache):
 	
 	# Accepts requests from REGISTERS and it adds them to a queue
 	#@echo.echo
-	def request(self, addr, register):
-		self.sync_req.append([addr, register])
+	def request(self, addr, register, reg_rid):
+		self.sync_req.append([addr, register, reg_rid])
 		dbg("REGISTER     ] " + str(register) + " is requesting from CACHE for addr= " + str(addr))
 	
 	
@@ -221,7 +221,7 @@ class Cache(GenericCache):
 				if self.if_already_requested([addr, self]):
 					continue
 				dbg("CACHE        ] " + str(self) + " is requesting from RAM for addr= " + str(addr))
-				self.ram.request(addr, self)
+				self.ram.request(addr, self, self.ram_rid)
 				self.already_requested.append([addr, self])
 				self.ram_rid += 1
 				self.system_manager.cache_notify_submit_request(self.ram_rid, addr)
@@ -236,13 +236,14 @@ class Cache(GenericCache):
 	
 	
 	
-	# Responds to each REGISTER     ] for its request
+	# Responds to each REGISTER for its request
 	#@echo.echo
 	def respond_requests(self):
 		for req in self.req:
 			addr  = req[0]
 			value = self.get_cell_value(req[0])
 			register = req[1]
+			reg_rid = req[2]
 			
 			# If the value is still not in the CACHE
 			# check if it in the answers list
@@ -262,8 +263,7 @@ class Cache(GenericCache):
 			self.remove_elem([addr, value], self.req)
 			self.remove_elem([addr, register], self.already_requested)
 			
-			self.reg_rid += 1
-			self.system_manager.cache_notify_submit_answer(register, self.reg_rid, addr)
+			self.system_manager.cache_notify_submit_answer(register, reg_rid, addr)
 	
 	
 	
@@ -312,7 +312,7 @@ class RegisterSet(GenericRegisterSet):
 		self.cache = cache
 		self.system_manager = system_manager
 		self.register_set = num_register_cells * [None]
-		self.rid = 0
+		self.cache_rid = 0
 		
 		self.already_requested = []
 		
@@ -360,8 +360,8 @@ class RegisterSet(GenericRegisterSet):
 	
 	# Accepts requests from the processor it is connected to
 	#@echo.echo
-	def request(self, addr, processor):
-		self.sync_req.append([addr, processor])
+	def request(self, addr, processor, processor_rid):
+		self.sync_req.append([addr, processor, processor_rid])
 		dbg("PROCESSOR    ]" + str(processor) + " is requesting REGISTER for addr= " + str(addr))
 
 	#@echo.echo
@@ -390,10 +390,10 @@ class RegisterSet(GenericRegisterSet):
 				if self.if_already_requested([addr, self]):
 					continue
 				
-				self.cache.request(addr, self)
+				self.cache.request(addr, self, self.cache_rid)
 				self.already_requested.append([addr, self])
-				self.rid += 1
-				self.system_manager.register_set_notify_submit_request(self.cache, self.rid, addr)
+				self.cache_rid += 1
+				self.system_manager.register_set_notify_submit_request(self.cache, self.cache_rid, addr)
 			# If the value is in the REGISTER     ] send it to the PROCE
 	
 	def remove_elem(self, elem_to_remove, the_list):
@@ -409,6 +409,7 @@ class RegisterSet(GenericRegisterSet):
 			addr  = req[0]
 			value = self.get_cell_value(req[0])
 			processor = req[1]
+			processor_rid = req[2]
 			
 			# If the address/value is not in the REGISTER yet
 			# it may be in the answer list from cache
@@ -429,8 +430,7 @@ class RegisterSet(GenericRegisterSet):
 
 			self.remove_elem([addr, processor], self.req)
 			self.remove_elem([addr, processor], self.already_requested)
-			self.rid += 1
-			self.system_manager.register_set_notify_submit_answer(processor, self.rid, addr)	
+			self.system_manager.register_set_notify_submit_answer(processor, processor_rid, addr)	
 
 	
 	# Prepares the lists for a new time step	
@@ -550,13 +550,13 @@ class Processor(GenericProcessor):
 	
 	def send_register_requests(self):
 			if not self.is_in_answers(self.addr1):
-				self.register_set.request(self.addr1, self)
+				self.register_set.request(self.addr1, self, self.rid)
 				self.rid += 1
 				self.sent_register_requests += 1
 				self.system_manager.processor_notify_submit_request(self.register_set, self.rid, self.addr1)
 			
 			if not self.is_in_answers(self.addr2):
-				self.register_set.request(self.addr2, self)
+				self.register_set.request(self.addr2, self, self.rid)
 				self.rid += 1
 				self.sent_register_requests += 1
 				self.system_manager.processor_notify_submit_request(self.register_set, self.rid, self.addr2)
