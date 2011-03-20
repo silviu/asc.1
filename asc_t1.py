@@ -391,20 +391,20 @@ class RegisterSet(GenericRegisterSet):
 			
 	
 	def send_cache_requests(self):
-		for req in self.req:
-			addr  = req[0]
-			value = self.get_cell_value(req[0])
-			processor = req[1]
+		for r in self.req:
+			addr  = r[0]
+			value = self.get_cell_value(r[0])
+			processor = r[1]
 			
 			# If the address/value is not in the REGISTER     ]
 			# request the value from the CACHE        ]
 
 			if value == None:
-				if self.if_already_requested([addr, self]):
+				if self.if_already_requested([addr, processor]):
 					continue
 				
 				self.cache.request(addr, self, self.cache_rid)
-				self.already_requested.append([addr, self])
+				self.already_requested.append([addr, processor])
 				self.system_manager.register_set_notify_submit_request(self.cache, self.cache_rid, addr)
 				self.cache_rid += 1
 			# If the value is in the REGISTER     ] send it to the PROCE
@@ -418,11 +418,15 @@ class RegisterSet(GenericRegisterSet):
 	# Responds to the Processor for its request
 	#@echo.echo
 	def respond_requests(self):
-		for req in self.req:
-			addr  = req[0]
-			value = self.get_cell_value(req[0])
-			processor = req[1]
-			processor_rid = req[2]
+		requests_to_remove = []
+		alreadys_to_remove = []
+		req_copy = self.req
+		
+		for r in req_copy:
+			addr  = r[0]
+			value = self.get_cell_value(r[0])
+			processor = r[1]
+			processor_rid = r[2]
 			
 			# If the address/value is not in the REGISTER yet
 			# it may be in the answer list from cache
@@ -440,10 +444,16 @@ class RegisterSet(GenericRegisterSet):
 				
 			dbg("REGISTER     ] " + str(self) + " is responding to PROCESSOR for addr= " + str(addr) + " value= " + str(value))
 			processor.get_answer_from_Register(addr, value)
-
-			self.remove_elem([addr, processor], self.req)
-			self.remove_elem([addr, processor], self.already_requested)
+			requests_to_remove.append([addr, processor, processor_rid])
+			alreadys_to_remove.append([addr, processor])
 			self.system_manager.register_set_notify_submit_answer(processor, processor_rid, addr)	
+		
+		for rem in requests_to_remove:			
+			self.remove_elem(rem, self.req)
+			
+		for alr in alreadys_to_remove:
+			self.remove_elem(alr, self.already_requested)
+
 
 	
 	# Prepares the lists for a new time step	
@@ -479,7 +489,9 @@ class RegisterSet(GenericRegisterSet):
 			
 			# Replying to requests
 			if len(self.req) > 0:
+				print "\n[REGISTER INFO B] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer)
 				self.respond_requests()
+				print "\n[REGISTER INFO A] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer)
 			barrier.end_reply_requests(self)
 
 			# Processing answers
