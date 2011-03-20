@@ -639,11 +639,11 @@ class ProcessScheduler(GenericProcessScheduler):
 	#@echo.echo
 	#TODO se joaca cu lista procesorului. trebuie sincronizat
 	def get_processor(self):
-		min_proc = sys.maxint
-		for processor in self.processor_list:
-			if processor.get_process_number() < min_proc:
-				min_proc = processor.get_process_number()
-				saved_processor = processor
+		#min_proc = sys.maxint
+		#for processor in self.processor_list:
+		#	if processor.get_process_number() < min_proc:
+		#		min_proc = processor.get_process_number()
+		#		saved_processor = processor
 		return self.processor_list[0]
 	
 	def get_processor_info_from_Processor(self, info):
