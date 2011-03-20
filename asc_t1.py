@@ -646,7 +646,6 @@ class Processor(GenericProcessor):
 				self.system_manager.processor_notify_finish_executing_operation(self.result)
 				self.process.inc_number_of_executed_operations()
 				self.old_register_answers = []
-				self.sent_register_requests = 0
 				self.state = IDLE
 	
 	
