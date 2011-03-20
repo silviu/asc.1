@@ -556,7 +556,7 @@ class Processor(GenericProcessor):
 				return
 			
 			print "\n\n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!``````BUSYYY````````!!!!!!!!!!!!!!!!!!!\n\n" 
-			if self.sent_register_requests == self.len(register_answers):
+			if self.sent_register_requests == len(self.register_answers):
 				if self.operand == "+":
 					for answer in self.register_answers:
 						self.result += answer[1]
