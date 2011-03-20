@@ -420,20 +420,20 @@ class Processor(GenericProcessor):
 		self.sent_register_requests = 0
 		self.operand = None
 		
-		self.curr_proc = Synced_list()
-		self.old_proc = []
+		self.curr_process = Synced_list()
+		self.old_process = []
 		
 		self.register_answers = Synced_list()
 		
 	#@echo.echo
 	def get_process_number(self):
-		return self.curr_proc.get_len()
+		return self.curr_process.get_len()
 		
 	# This method is called by the ProcessScheduler
 	# and it adds a new process in the queue
 	#@echo.echo
 	def add_processes(self, process, scheduler):
-		self.curr_proc.append(process)
+		self.curr_process.append(process)
 		self.scheduler = scheduler
 		dbg("~~~~~~PROCESSOR " + str(self) + " received a process from the SCHEDULER; process =" + str(process))
 		
@@ -454,7 +454,7 @@ class Processor(GenericProcessor):
 	#@echo.echo
 	def get_max_operations(self):
 		max_op = 0
-		for proc in self.old_proc:
+		for proc in self.old_process:
 			curr_op = proc.get_number_of_executed_operations()
 			if curr_op > max_op:
 				max_op = curr_op
@@ -466,7 +466,7 @@ class Processor(GenericProcessor):
 	def get_process_to_run(self):
 		max_op = self.get_max_operations()
 		
-		for proc in self.old_proc:
+		for proc in self.old_process:
 			curr_op = proc.get_number_of_executed_operations()
 			if curr_op == max_op:
 				return proc
@@ -514,9 +514,9 @@ class Processor(GenericProcessor):
 	
 	
 	def remove_element(self, elem):
-		for proc in self.old_proc:
-			if proc == elem:
-				self.old_proc.remove(proc)
+		for process in self.old_process:
+			if process == elem:
+				self.old_process.remove(process)
 				return
 			
 	# Implements the behavour of the PROCESSOR
@@ -573,8 +573,8 @@ class Processor(GenericProcessor):
 	# of the current PROCESSOR
 	def get_sum_operations(self):
 		suma = 0
-		for baba in self.old_proc:
-			suma += baba.get_number_of_operations()
+		for process in self.old_process:
+			suma += process.get_number_of_operations()
 		return suma
 	
 	# Sends the sum of all operations in all processes
@@ -586,8 +586,8 @@ class Processor(GenericProcessor):
 	# Prepares the lists for a new time step
 	#@echo.echo
 	def prepare_request_lists(self):
-		self.old_proc.extend(self.curr_proc.list)
-		self.curr_proc.list = []
+		self.old_process.extend(self.curr_process.list)
+		self.curr_process.list = []
 
 	#@echo.echo
 	def run(self):
@@ -599,7 +599,7 @@ class Processor(GenericProcessor):
 			
 			# If the processor has not just started, therefore 
 			# it has something to request
-			if len(self.old_proc) > 0:
+			if len(self.old_process) > 0:
 				self.send_register_requests()
 			barrier.end_requests(self)
 			
@@ -609,12 +609,12 @@ class Processor(GenericProcessor):
 			
 			# If there are any processes on this processor
 			# send info of them to the scheduler
-			if len(self.old_proc) > 0:
+			if len(self.old_process) > 0:
 				self.reply_to_scheduler()
 			barrier.end_reply_requests(self)
 			
 			# First time it enters for both are 0
-			if len(self.old_proc) > 0:
+			if len(self.old_process) > 0:
 				self.run_process()
 			barrier.end_process_answers(self)
 			
@@ -625,15 +625,15 @@ class ProcessScheduler(GenericProcessScheduler):
 		self.processor_list = processor_list
 		self.system_manager = system_manager
 		
-		self.old_proc_info = []
-		self.curr_proc_info = Synced_list()
+		self.old_process_info = []
+		self.curr_process_info = Synced_list()
 		
-		self.old_proc  = []
-		self.curr_proc = Synced_list()
+		self.old_process  = []
+		self.curr_process = Synced_list()
 	
 	#@echo.echo
 	def submit_process(self, process):
-		self.curr_proc.append(process)
+		self.curr_process.append(process)
 		dbg("~~~~~~SCHEDULER " + str(self) + " received a process from SYSTEM_MANAGER; process= " + str(process))
 
 	#@echo.echo
@@ -647,25 +647,25 @@ class ProcessScheduler(GenericProcessScheduler):
 		return self.processor_list[0]
 	
 	def get_processor_info_from_Processor(self, info):
-		self.curr_proc_info.append(info)
+		self.curr_process_info.append(info)
 		dbg("~~~~~~SCHEDULER " + str(self) + " received processor info from PROCESSOR = " + str(info[0]) + " info= " + str(info[1]))
 	
 	#@echo.echo
 	def schedule_processes(self):
-		for process in self.old_proc:
-			processor = self.get_processor()
-			processor.add_processes(process, self)  # TRIMITERE CERERE
-			self.system_manager.scheduler_notify_submit_process(processor, process)
+		for process in self.old_process:
+			cpu = self.get_processor()
+			cpu.add_processes(process, self)  # TRIMITERE CERERE
+			self.system_manager.scheduler_notify_submit_process(cpu, process)
 
 	# Prepares the lists for a new time step
 	#@echo.echo	
 	def prepare_request_lists(self):
-		self.old_proc = self.curr_proc.list
-		self.curr_proc.list = []
+		self.old_process = self.curr_process.list
+		self.curr_process.list = []
 	
 	def prepare_answer_lists(self):
-		self.old_proc = self.curr_proc.list
-		self.curr_proc.list = []
+		self.old_process_info = self.curr_process_info.list
+		self.curr_process_info.list = []
 	
 	#@echo.echo
 	def run(self):
@@ -676,7 +676,7 @@ class ProcessScheduler(GenericProcessScheduler):
 				return
 			
 
-			if len(self.old_proc) > 0:
+			if len(self.old_process) > 0:
 				self.schedule_processes()
 			barrier.end_requests(self)
 			
