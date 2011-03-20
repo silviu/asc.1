@@ -87,7 +87,7 @@ class Ram(GenericRAM):
 	##@echo.echo
 	def request(self, addr, cache, rid):
 		self.sync_req.append([addr, cache, rid])
-		dbg("CACHE        ] " + str(cache) + " is requesting from RAM addr= " + str(addr))
+		dbg("CACHE        ] " + str(cache) + " is requesting from RAM addr= " + str(addr) + " RID = " + str(rid))
 	
 	
 	#Responds to every CACHE for their previous requests
