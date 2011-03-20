@@ -223,8 +223,8 @@ class Cache(GenericCache):
 				dbg("CACHE        ] " + str(self) + " is requesting from RAM for addr= " + str(addr))
 				self.ram.request(addr, self, self.ram_rid)
 				self.already_requested.append([addr, self])
-				self.ram_rid += 1
 				self.system_manager.cache_notify_submit_request(self.ram_rid, addr)
+				self.ram_rid += 1
 	
 	
 	
@@ -392,8 +392,8 @@ class RegisterSet(GenericRegisterSet):
 				
 				self.cache.request(addr, self, self.cache_rid)
 				self.already_requested.append([addr, self])
-				self.cache_rid += 1
 				self.system_manager.register_set_notify_submit_request(self.cache, self.cache_rid, addr)
+				self.cache_rid += 1
 			# If the value is in the REGISTER     ] send it to the PROCE
 	
 	def remove_elem(self, elem_to_remove, the_list):
@@ -551,15 +551,15 @@ class Processor(GenericProcessor):
 	def send_register_requests(self):
 			if not self.is_in_answers(self.addr1):
 				self.register_set.request(self.addr1, self, self.rid)
-				self.rid += 1
 				self.sent_register_requests += 1
 				self.system_manager.processor_notify_submit_request(self.register_set, self.rid, self.addr1)
+				self.rid += 1
 			
 			if not self.is_in_answers(self.addr2):
 				self.register_set.request(self.addr2, self, self.rid)
-				self.rid += 1
 				self.sent_register_requests += 1
 				self.system_manager.processor_notify_submit_request(self.register_set, self.rid, self.addr2)
+				self.rid += 1
 				
 	
 	def get_next_operation(self):
