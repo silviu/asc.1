@@ -645,7 +645,7 @@ class Processor(GenericProcessor):
 				
 				self.system_manager.processor_notify_finish_executing_operation(self.result)
 				self.process.inc_number_of_executed_operations()
-				self.prepare_answer_list()
+				self.old_register_answers = []
 				self.sent_register_requests = 0
 				self.state = IDLE
 	
@@ -671,7 +671,7 @@ class Processor(GenericProcessor):
 		self.curr_process.list = []
 	
 	def prepare_answer_list(self):
-		self.old_register_answers = self.curr_register_answers.list
+		self.old_register_answers.extend(self.curr_register_answers.list)
 		self.curr_register_answers.list = []
 	
 	#@echo.echo
@@ -701,6 +701,7 @@ class Processor(GenericProcessor):
 			# First time it enters for both are 0
 			if len(self.old_process) > 0:
 				self.run_process()
+				self.prepare_answer_list()
 			barrier.end_process_answers(self)
 			
 
