@@ -637,13 +637,14 @@ class ProcessScheduler(GenericProcessScheduler):
 		dbg("~~~~~~SCHEDULER " + str(self) + " received a process from SYSTEM_MANAGER; process= " + str(process))
 
 	#@echo.echo
+	#TODO se joaca cu lista procesorului. trebuie sincronizat
 	def get_processor(self):
 		min_proc = sys.maxint
 		for processor in self.processor_list:
 			if processor.get_process_number() < min_proc:
 				min_proc = processor.get_process_number()
 				saved_processor = processor
-		return saved_processor
+		return self.processor_list[0]
 	
 	def get_processor_info_from_Processor(self, info):
 		self.curr_proc_info.append(info)
