@@ -232,7 +232,7 @@ class Cache(GenericCache):
 	def remove_elem(self, elem_to_remove, the_list):
 		for elem in the_list:
 			if elem == elem_to_remove:
-				the_list.remove(elem)
+				the_list.remove(elem_to_remove)
 				return
 	
 	
@@ -297,12 +297,13 @@ class Cache(GenericCache):
 			
 
 			if len(self.req) > 0:
+				print "\n[CACHE INFO B ] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer)
 				self.respond_requests()
+				print "\n[CACHE INFO A ] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer)
 			barrier.end_reply_requests(self)
 			
 			
 			self.prepare_answer_list()
-			print "\n[CACHE INFO   ] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer)
 			barrier.end_process_answers(self)
 			
 			
