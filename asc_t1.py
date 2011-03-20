@@ -219,11 +219,11 @@ class Cache(GenericCache):
 			# de request in the sync_req so that it will be
 			# processed at the next time step
 			if value == None:
-				if self.if_already_requested([addr, self]):
+				if self.if_already_requested([addr, register]):
 					continue
 				dbg("CACHE        ] " + str(self) + " is requesting from RAM for addr= " + str(addr))
 				self.ram.request(addr, self, self.ram_rid)
-				self.already_requested.append([addr, self])
+				self.already_requested.append([addr, register])
 				self.system_manager.cache_notify_submit_request(self.ram_rid, addr)
 				self.ram_rid += 1
 	
@@ -241,6 +241,9 @@ class Cache(GenericCache):
 	#@echo.echo
 	def respond_requests(self):
 		req_copy = self.req
+		requests_to_remove = []
+		alreadys_to_remove = []
+		
 		for r in req_copy:
 			addr  = r[0]
 			value = self.get_cell_value(r[0])
@@ -262,10 +265,17 @@ class Cache(GenericCache):
 			
 			dbg("CACHE        ] " + str(self) + " is responding to REGISTER for addr= " + str(addr) + " value= " + str(value))
 			register.get_answer_from_Cache(addr, value)
-			self.remove_elem([addr, value], self.req)
-			self.remove_elem([addr, register], self.already_requested)
+			
+			requests_to_remove.append([addr, register, reg_rid])
+			alreadys_to_remove.append([addr, register])
+			
 			self.system_manager.cache_notify_submit_answer(register, reg_rid, addr)
-
+		
+		for rem in requests_to_remove:
+			self.remove_elem(rem, self.req)
+		
+		for alr in alreadys_to_remove:
+			self.remove_elem(alr, self.already_requested)
 	
 	
 	# Prepares the lists for a new time step
