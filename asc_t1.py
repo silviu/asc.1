@@ -182,7 +182,7 @@ class Cache(GenericCache):
 			if self.cache[i] == None:
 				self.cache.insert(i, [addr, value])
 				return i
-			i += 1
+
 		# if there are no more empty cells
 		# default on overwriting cell 0
 		self.cache.insert(0, [addr, value])
@@ -347,13 +347,12 @@ class RegisterSet(GenericRegisterSet):
 	# it is added to the REGISTER
 	#@echo.echo
 	def set_cell_value(self, addr, value):
-		i = 0
 		# Look for the first empty cell and and value there
 		for i in range(self.num_register_cells):
 			if self.register_set[i] == None:
 				self.register_set.insert(i, [addr, value])
 				return i
-			i += 1
+		
 		# If there are no more empty cells default on overwriting 
 		# the first cell
 		self.register_set.insert(0, [addr, value])
@@ -427,7 +426,9 @@ class RegisterSet(GenericRegisterSet):
 				
 			dbg("~~~~~~REGISTER " + str(self) + " is responding to PROCESSOR for addr= " + str(addr) + " value= " + str(value))
 			processor.get_answer_from_Register(addr, value)
+			print "QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQREGISTER REQUEST LIST BEFORE= " + str(self.req)
 			self.remove_elem([addr, processor], self.req)
+			print "QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQREGISTER REQUEST LIST AFTER= " + str(self.req)
 			self.remove_elem([addr, processor], self.already_requested)
 			self.rid += 1
 			self.system_manager.register_set_notify_submit_answer(processor, self.rid, addr)	
