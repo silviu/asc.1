@@ -173,8 +173,8 @@ class Cache(GenericCache):
 				self.cache[i] = value
 				return i
 			i += 1
-		self.cache.append([addr, value])
-		return len(self.cache)
+		self.cache.insert(0, [addr, value])
+		return 0
 	
 	# This method will be called from the RAM
 	# It receives answers to previous requests from the RAM
@@ -205,6 +205,11 @@ class Cache(GenericCache):
 				self.system_manager.cache_notify_submit_request(self.ram_rid, addr)
 				self.curr_req.append([addr, register])
 		
+	def remove_element(self, elem):
+		for request in self.old_req:
+			if request == elem:
+				self.old_req.remove(request)
+				return
 	
 	# Responds to each REGISTER for its request
 	#@echo.echo
@@ -229,9 +234,9 @@ class Cache(GenericCache):
 			
 			dbg("~~~~~~CACHE " + str(self) + " is responding to REGISTER for addr= " + str(addr) + " value= " + str(value))
 			register.get_answer_from_Cache(addr, value)
-			self.old_req.remove([addr, value])
+			self.remove_element([addr, value])
 			self.reg_rid += 1
-			self.system_manager.cache_notify_submit_answer(register.register_set, self.reg_rid, addr)
+			self.system_manager.cache_notify_submit_answer(register, self.reg_rid, addr)
 	
 	# Prepares the lists for a new time step
 	#@echo.echo
@@ -301,12 +306,17 @@ class RegisterSet(GenericRegisterSet):
 	# it is added to the REGISTER
 	#@echo.echo
 	def set_cell_value(self, addr, value):
-		for i, register_cell in enumerate(self.register_set):
-			if register_cell[0] == addr:
-				register_cell[1] = value
+		i = 0
+		# Look for the first empty cell and and value there
+		for i in range(self.num_register_cells):
+			if self.register_set[i] == None:
+				self.register_set.insert(i, [addr, value])
 				return i
-		self.register_set.append([addr, value])
-		return register_set.get_len()
+			i += 1
+		# If there are no more empty cells default on overwriting 
+		# the first cell
+		self.register_set.insert(0, [addr, value])
+		return 0
 	
 	# Accepts requests from the processor it is connected to
 	#@echo.echo
@@ -322,7 +332,7 @@ class RegisterSet(GenericRegisterSet):
 	#@echo.echo
 	def process_cache_answers(self):
 		for answer in self.old_answer:
-			dbg("~~~~~~REGISTER " + str(self) + " is processing answer from CACHE for addr= " + str(answer[0]) + " value= " + str(answr[1]))
+			dbg("~~~~~~REGISTER " + str(self) + " is processing answer from CACHE for addr= " + str(answer[0]) + " value= " + str(answer[1]))
 			position = self.set_cell_value(answer[0], answer[1])
 			self.system_manager.register_set_notify_store_value(position, answer[0])
 			
@@ -341,7 +351,13 @@ class RegisterSet(GenericRegisterSet):
 				self.rid += 1
 				self.system_manager.register_set_notify_submit_request(self.cache, self.rid, addr)
 			# If the value is in the REGISTER send it to the PROCE
-
+	
+	def remove_element(self, elem):
+		for request in self.old_req:
+			if request == elem:
+				self.old_req.remove(request)
+				return
+			
 	# Responds to the Processor for its request
 	#@echo.echo
 	def respond_requests(self):
@@ -356,7 +372,7 @@ class RegisterSet(GenericRegisterSet):
 				for answer in self.old_answer:
 					if answer[0] == addr:
 						value = answer[1]
-						self.set_cell_value([addr, value])
+						self.set_cell_value(addr, value)
 						break
 			
 			# If addr is not in REGISTER and not in the answers list
@@ -366,7 +382,7 @@ class RegisterSet(GenericRegisterSet):
 				
 			dbg("~~~~~~REGISTER " + str(self) + " is responding to PROCESSOR for addr= " + str(addr) + " value= " + str(value))
 			processor.get_answer_from_Register(addr, value)
-			self.old_proc.remove([addr, value])
+			self.remove_element([addr, value])
 			self.rid += 1
 			self.system_manager.register_set_notify_submit_answer(processor, self.rid, addr)	
 
@@ -448,7 +464,7 @@ class Processor(GenericProcessor):
 		
 	#@echo.echo
 	def get_answer_from_Register(self, addr, value):
-		register_answers.append([addr, value])
+		self.register_answers.append([addr, value])
 		dbg("~~~~~~PROCESSOR" + str(self) + " received an answer from REGISTER for addr= " + str(addr) + " value= " + str(value))
 	
 	#@echo.echo
