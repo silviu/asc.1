@@ -523,7 +523,7 @@ class Processor(GenericProcessor):
 	#@echo.echo
 	def run_process(self):	
 		if self.state == IDLE:
-			print "\n\n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!``````BUSYYY````````!!!!!!!!!!!!!!!!!!!\n\n"
+			print "\n\n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!``````IDLEEE````````!!!!!!!!!!!!!!!!!!!\n\n"
 			
 			# Get number of operations left
 			if not self.process == None:
@@ -548,7 +548,7 @@ class Processor(GenericProcessor):
 				self.get_next_operation()
 				self.state = BUSY
 				
-		if self.state == BUSY:
+		elif self.state == BUSY:
 			if self.process == None:
 				self.state = IDLE
 				return
@@ -564,6 +564,7 @@ class Processor(GenericProcessor):
 					x = 1
 					for answer in self.register_answers.list:
 						x *= answer[1]
+				
 				self.process.inc_number_of_executed_operations()
 				self.system_manager.processor_notify_finish_executing_operation(x)
 				self.state = IDLE
@@ -588,7 +589,10 @@ class Processor(GenericProcessor):
 	def prepare_request_lists(self):
 		self.old_process.extend(self.curr_process.list)
 		self.curr_process.list = []
-
+	
+	def prepare_answer_list(self):
+		self.register_answers.list =[]
+	
 	#@echo.echo
 	def run(self):
 		self.system_manager.register_processor(self)
@@ -615,6 +619,7 @@ class Processor(GenericProcessor):
 			
 			# First time it enters for both are 0
 			if len(self.old_process) > 0:
+				self.prepare_answer_list()
 				self.run_process()
 			barrier.end_process_answers(self)
 			
