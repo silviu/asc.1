@@ -352,10 +352,10 @@ class RegisterSet(GenericRegisterSet):
 			if EXIT_TIME:
 				return
 			
-			# Accepting requests
+			# Accepting or sending requests
 			barrier.end_requests(self)
 			
-			# Processing requests
+			# Interchange shared request list with my local list 
 			barrier.end_process_requests(self)
 			
 			# Replying to requests
@@ -366,7 +366,8 @@ class RegisterSet(GenericRegisterSet):
 			# Processing answers
 			if len(self.old_answer) > 0:
 				self.process_cache_answers()
-				self.prepare_lists()
+				
+			self.prepare_lists()
 			barrier.end_process_answers(self)
 			
 				
@@ -379,6 +380,8 @@ class Processor(GenericProcessor):
 		self.system_manager = system_manager
 		self.state = IDLE
 		self.rid = 0
+		self.process = None
+		self.operation_index = 0
 		
 		self.curr_proc = Synced_list()
 		self.old_proc = []
@@ -392,8 +395,9 @@ class Processor(GenericProcessor):
 	# This method is called by the ProcessScheduler
 	# and it adds a new process in the queue
 	#@echo.echo
-	def add_processes(self, process):
+	def add_processes(self, process, scheduler):
 		self.curr_proc.append(process)
+		self.scheduler = scheduler
 		dbg("~~~~~~PROCESSOR " + str(self) + " received a process from the SCHEDULER; process =" + str(process))
 		
 	#@echo.echo
@@ -429,54 +433,100 @@ class Processor(GenericProcessor):
 			curr_op = proc.get_number_of_executed_operations()
 			if curr_op == max_op:
 				return proc
+
+	
+	def send_register_requests(self):
+		if self.state == IDLE:
+			if not self.is_in_answers(self.addr1):
+				self.register_set.request(self.addr1, self)
+				self.rid += 1
+				self.sent_register_requests += 1
+				self.system_manager.processor_notify_submit_request(self.register_set, self.rid, self.addr1)
+			if not self.is_in_answers(self.addr2):
+				self.register_set.request(self.addr2, self)
+				self.rid += 1
+				self.sent_register_requests += 1
+				self.system_manager.processor_notify_submit_request(self.register_set, self.rid, self.addr2)
+				
+	def get_next_operation(self):
+		# If there are no more operations left to run return None
+		if self.operation_index > self.process.get_number_of_operations():
+			return None
+		
+		# Get next operation
+		self.operation = self.process.get_operation(self.operation_index)
+		self.operation_index += 1
+		
+		# Initialize Register requests counter that is used to decide
+		# when to start running the operation 
+		# (sent_register_requests == number of replies from the Register)
+		self.sent_register_requests = 0
+		
+		# operand = "+" or "*"
+		# addr1 and addr2 are the RAM adresses where the values
+		# to be added or multiplied
+		# TODO in viitor pot primi si "+ 2 3 4 5 3 9". va fi nevoie de o lista
+		self.operand = self.operation[0]
+		self.addr1   = self.operation[1]
+		self.addr2   = self.operation[2]
+	
 	
 	# Implements the behavour of the PROCESSOR
 	#@echo.echo
-	def run_process(self):
-		self.process = self.get_process_to_run()
-		if self.process == None:
-			return
-		self.num_operations = self.process.get_number_of_operations()
+	def run_process(self):	
 		if self.state == IDLE:
-			print "\n\n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!``````IDLEEEE````````!!!!!!!!!!!!!!!!!!!\n\n"
-			for i in range(self.num_operations):
-				self.operation = self.process.get_operation(i)
-				
-				self.operand = self.operation[0]
-				self.addr1   = self.operation[1]
-				self.addr2   = self.operation[2]
-				
-				if not self.is_in_answers(self.addr1):
-					self.register_set.request(self.addr1, self)
-					self.rid += 1
-					self.system_manager.processor_notify_submit_request(self.register_set, self.rid, self.addr1)
-				if not self.is_in_answers(self.addr2):
-					self.register_set.request(self.addr2, self)
-					self.rid += 1
-					self.system_manager.processor_notify_submit_request(self.register_set, self.rid, self.addr2)
-				
-				self.state = BUSY
-		
-		elif self.state == BUSY:
 			print "\n\n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!``````BUSYYY````````!!!!!!!!!!!!!!!!!!!\n\n"
-			if self.register_answers.get_len() == 2:
-				self.system_manager.processor_notify_start_executing_next_operation(self.process) 
-				if self.operand == "+":
-					x = 0
-					for answer in self.register_answers.list:
-						x += answer[1]
-				elif self.operand == "*":
-					x = 1
-					for answer in self.register_answers.list:
-						x *= answer[1]
-				self.process.inc_number_of_executed_operations()
-				self.system_manager.processor_notify_finish_executing_operation(x)
-				self.state = IDLE
+			
+			# Get number of operations left
+			if not self.process == None:
+				self.operations_left = self.process.get_number_of_operations() - get_number_of_executed_operations()
+
+			# If running the first time(None) of if the processor finished all
+			# operations for this process get another process from the queue
+			if self.process == None or self.operations_left == 0:
+				self.process = self.get_process_to_run()
+				self.get_next_operation()
+				self.state = BUSY
+
+			# If the current process has multiple operations
+			else:
+				self.get_next_operation()
+				self.state = BUSY
+				
+		if self.state == BUSY:
+			print "\n\n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!``````BUSYYY````````!!!!!!!!!!!!!!!!!!!\n\n"
+			self.system_manager.processor_notify_start_executing_next_operation(self.process) 
+			if self.operand == "+":
+				x = 0
+				for answer in self.register_answers.list:
+					x += answer[1]
+			elif self.operand == "*":
+				x = 1
+				for answer in self.register_answers.list:
+					x *= answer[1]
+			self.process.inc_number_of_executed_operations()
+			self.system_manager.processor_notify_finish_executing_operation(x)
+			self.state = IDLE
+	
+	
+	# Calculates the sum of all operations in all processes
+	# of the current PROCESSOR
+	def get_sum_operations(self):
+		suma = 0
+		for pro in self.old_proc:
+			suma += pro.get_number_of_operations()
+		return suma
+	
+	# Sends the sum of all operations in all processes
+	# of the current PROCESSOR to the SCHEDULER
+	def reply_to_scheduler(self):
+		suma = self.get_sum_operations()
+		self.scheduler.get_processor_info_from_Processor([self, suma])
 	
 	# Prepares the lists for a new time step
 	#@echo.echo
-	def prepare_lists(self):
-		self.old_proc = self.curr_proc.list
+	def prepare_request_lists(self):
+		self.old_proc.append(self.curr_proc.list)
 		self.curr_proc.list = []
 
 	#@echo.echo
@@ -487,19 +537,21 @@ class Processor(GenericProcessor):
 			if EXIT_TIME:
 				return
 			
-			# Accepting requests
-			if len(self.old_proc) > 0:
-				self.run_process()
+			# If the processor has not just started, therefore 
+			# it has something to request
+			if not self.process == None:
+				self.send_register_requests()
 			barrier.end_requests(self)
 			
-			# Processing requests
-			self.prepare_lists()
+
+			self.prepare_request_lists()
 			barrier.end_process_requests(self)
 			
-			# Replying to requests
+			self.reply_to_scheduler()
 			barrier.end_reply_requests(self)
 			
-			# Process answers
+			if self.sent_register_requests == self.register_answers.get_len():
+				self.run_process()
 			barrier.end_process_answers(self)
 			
 
@@ -508,6 +560,9 @@ class ProcessScheduler(GenericProcessScheduler):
 		Thread.__init__(self)
 		self.processor_list = processor_list
 		self.system_manager = system_manager
+		
+		self.old_proc_info = []
+		self.curr_proc_info = Synced_list()
 		
 		self.old_proc  = []
 		self.curr_proc = Synced_list()
@@ -526,16 +581,24 @@ class ProcessScheduler(GenericProcessScheduler):
 				saved_process = process
 		return saved_process
 	
+	def get_processor_info_from_Processor(self, info):
+		self.curr_proc_info.append(info)
+		gdb("~~~~~~SCHEDULER " + str(self) + " received processor info from PROCESSOR = " + str(info[0]) + " info= " + str(info[1]))
+	
 	#@echo.echo
 	def schedule_processes(self):
 		for process in self.old_proc:
 			processor = self.get_processor()
-			processor.add_processes(process)
+			processor.add_processes(process, self)  # TRIMITERE CERERE
 			self.system_manager.scheduler_notify_submit_process(processor, process)
 
 	# Prepares the lists for a new time step
 	#@echo.echo	
-	def prepare_lists(self):
+	def prepare_request_lists(self):
+		self.old_proc = self.curr_proc.list
+		self.curr_proc.list = []
+	
+	def prepare_answer_lists(self):
 		self.old_proc = self.curr_proc.list
 		self.curr_proc.list = []
 	
@@ -547,19 +610,19 @@ class ProcessScheduler(GenericProcessScheduler):
 			if EXIT_TIME:
 				return
 			
-			# Accepting requests
+
 			if len(self.old_proc) > 0:
 				self.schedule_processes()
 			barrier.end_requests(self)
 			
-			# Processing requests
-			self.prepare_lists()
+
+			self.prepare_request_lists()
 			barrier.end_process_requests(self)
 			
-			# Replying to requests
+
 			barrier.end_reply_requests(self)
 			
-			# Process answers
+			self.prepare_answer_lists()
 			barrier.end_process_answers(self)
 			
 
