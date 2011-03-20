@@ -494,7 +494,10 @@ class Processor(GenericProcessor):
 		self.curr_process = Synced_list()
 		self.old_process = []
 		
-		self.register_answers = []
+		
+		self.old_register_answers = []
+		self.curr_register_answers = Synced_list()
+		
 		
 	#@echo.echo
 	def get_process_number(self):
@@ -510,12 +513,12 @@ class Processor(GenericProcessor):
 		
 	#@echo.echo
 	def get_answer_from_Register(self, addr, value):
-		self.register_answers.append([addr, value])
+		self.curr_register_answers.append([addr, value])
 		dbg("~~~~~~PROCESSOR" + str(self) + " received an answer from REGISTER for addr= " + str(addr) + " value= " + str(value))
 	
 	#@echo.echo
 	def is_in_answers(self, addr):
-		for answer in self.register_answers:
+		for answer in self.old_register_answers:
 			if answer[0] == addr:
 				return True
 		return False
@@ -627,12 +630,17 @@ class Processor(GenericProcessor):
 				return
 			
 			print "\n\n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!``````BUSYYY````````!!!!!!!!!!!!!!!!!!!\n\n" 
-			if self.sent_register_requests == len(self.register_answers):
+			print "\n\nSSENT REGISTER REQUESTS = " + str(self.sent_register_requests)
+			
+			if self.sent_register_requests == 0:
+				return
+				
+			if self.sent_register_requests == len(self.old_register_answers):
 				if self.operand == "+":
-					for answer in self.register_answers:
+					for answer in self.old_register_answers:
 						self.result += answer[1]
 				elif self.operand == "*":
-					for answer in self.register_answers:
+					for answer in self.old_register_answers:
 						self.result *= answer[1]
 				
 				self.system_manager.processor_notify_finish_executing_operation(self.result)
@@ -663,7 +671,8 @@ class Processor(GenericProcessor):
 		self.curr_process.list = []
 	
 	def prepare_answer_list(self):
-		self.register_answers = []
+		self.old_register_answers = self.curr_register_answers.list
+		self.curr_register_answers.list = []
 	
 	#@echo.echo
 	def run(self):
