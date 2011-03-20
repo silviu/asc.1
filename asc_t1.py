@@ -88,7 +88,7 @@ class Ram(GenericRAM):
 	##@echo.echo
 	def request(self, addr, cache):
 		self.sync_req.append((addr, cache))
-		dbg("~~~~~~CACHE " + str(cache) + " is requesting from RAM addr= " + str(addr))
+		dbg("CACHE        ] " + str(cache) + " is requesting from RAM addr= " + str(addr))
 	
 	
 	#Responds to every CACHE for their previous requests
@@ -101,7 +101,7 @@ class Ram(GenericRAM):
 			cache.get_answer_from_Ram(addr, value)
 			self.rid += 1
 			self.system_manager.ram_notify_submit_answer(cache, self.rid, addr)
-			dbg("~~~~~~RAM " + str(self) + " is responding to CACHE for addr= " + str(addr) + " value= " + str(value))
+			dbg("RAM          ]" + str(self) + " is responding to CACHE for addr= " + str(addr) + " value= " + str(value))
 	
 	# Prepares the lists for a new time step
 	##@echo.echo
@@ -173,7 +173,7 @@ class Cache(GenericCache):
 	
 	
 	# Tries to find the mapped address of the RAM address "addr" 
-	# in the CACHE. If there is no mapping for this adress, 
+	# in the CACHE . If there is no mapping for this adress, 
 	# it is added to the CACHE
 	#@echo.echo
 	def set_cell_value(self, addr, value):
@@ -195,7 +195,7 @@ class Cache(GenericCache):
 	#@echo.echo
 	def get_answer_from_Ram(self, addr, value):
 		self.sync_answer.append([addr, value])
-		dbg("~~~~~~CACHE " + str(self) + " is getting answer from RAM for addr= " + str(addr) + " value= " + str(value))
+		dbg("CACHE        ] " + str(self) + " is getting answer from RAM for addr= " + str(addr) + " value= " + str(value))
 	
 	
 	
@@ -203,7 +203,7 @@ class Cache(GenericCache):
 	#@echo.echo
 	def request(self, addr, register):
 		self.sync_req.append([addr, register])
-		dbg("~~~~~~REGISTER " + str(register) + " is requesting from CACHE for addr= " + str(addr))
+		dbg("REGISTER     ] " + str(register) + " is requesting from CACHE for addr= " + str(addr))
 	
 	
 	
@@ -220,11 +220,11 @@ class Cache(GenericCache):
 			if value == None:
 				if self.if_already_requested([addr, self]):
 					continue
+				dbg("CACHE        ] " + str(self) + " is requesting from RAM for addr= " + str(addr))
 				self.ram.request(addr, self)
 				self.already_requested.append([addr, self])
 				self.ram_rid += 1
 				self.system_manager.cache_notify_submit_request(self.ram_rid, addr)
-				self.sync_req.append([addr, register])
 	
 	
 	
@@ -236,7 +236,7 @@ class Cache(GenericCache):
 	
 	
 	
-	# Responds to each REGISTER for its request
+	# Responds to each REGISTER     ] for its request
 	#@echo.echo
 	def respond_requests(self):
 		for req in self.req:
@@ -257,7 +257,7 @@ class Cache(GenericCache):
 			if value == None:
 				continue
 			
-			dbg("~~~~~~CACHE " + str(self) + " is responding to REGISTER for addr= " + str(addr) + " value= " + str(value))
+			dbg("CACHE        ]" + str(self) + " is responding to REGISTER for addr= " + str(addr) + " value= " + str(value))
 			register.get_answer_from_Cache(addr, value)
 			self.remove_elem([addr, value], self.req)
 			self.remove_elem([addr, register], self.already_requested)
@@ -362,17 +362,17 @@ class RegisterSet(GenericRegisterSet):
 	#@echo.echo
 	def request(self, addr, processor):
 		self.sync_req.append([addr, processor])
-		dbg("~~~~~~PROCESSOR " + str(processor) + " is requesting REGISTER for addr= " + str(addr))
+		dbg("PROCESSOR    ]" + str(processor) + " is requesting REGISTER for addr= " + str(addr))
 
 	#@echo.echo
 	def get_answer_from_Cache(self, addr, value):
 		self.sync_answer.append([addr, value])
-		dbg("~~~~~~REGISTER " + str(self) + " is receives answer from CACHE for addr= " + str(addr) + " value= " + str(value))
+		dbg("REGISTER     ]" + str(self) + " received answer from CACHE for addr= " + str(addr) + " value= " + str(value))
 	
 	#@echo.echo
 	def process_cache_answers(self):
 		for answer in self.answer:
-			dbg("~~~~~~REGISTER " + str(self) + " is processing answer from CACHE for addr= " + str(answer[0]) + " value= " + str(answer[1]))
+			dbg("REGISTER     ] " + str(self) + " is processing answer from CACHE for addr= " + str(answer[0]) + " value= " + str(answer[1]))
 			position = self.set_cell_value(answer[0], answer[1])
 			self.system_manager.register_set_notify_store_value(position, answer[0])
 			
@@ -383,8 +383,8 @@ class RegisterSet(GenericRegisterSet):
 			value = self.get_cell_value(req[0])
 			processor = req[1]
 			
-			# If the address/value is not in the REGISTER
-			# request the value from the CACHE
+			# If the address/value is not in the REGISTER     ]
+			# request the value from the CACHE        ]
 
 			if value == None:
 				if self.if_already_requested([addr, self]):
@@ -394,7 +394,7 @@ class RegisterSet(GenericRegisterSet):
 				self.already_requested.append([addr, self])
 				self.rid += 1
 				self.system_manager.register_set_notify_submit_request(self.cache, self.rid, addr)
-			# If the value is in the REGISTER send it to the PROCE
+			# If the value is in the REGISTER     ] send it to the PROCE
 	
 	def remove_elem(self, elem_to_remove, the_list):
 		for elem in the_list:
@@ -419,16 +419,15 @@ class RegisterSet(GenericRegisterSet):
 						self.set_cell_value(addr, value)
 						break
 			
-			# If addr is not in REGISTER and not in the answers list
+			# If addr is not in REGISTER     ] and not in the answers list
 			# send the next value and wait for this one for more
 			if value == None:
 				continue
 				
-			dbg("~~~~~~REGISTER " + str(self) + " is responding to PROCESSOR for addr= " + str(addr) + " value= " + str(value))
+			dbg("REGISTER     ] " + str(self) + " is responding to PROCESSOR for addr= " + str(addr) + " value= " + str(value))
 			processor.get_answer_from_Register(addr, value)
-			print "QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQREGISTER REQUEST LIST BEFORE= " + str(self.req)
+
 			self.remove_elem([addr, processor], self.req)
-			print "QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQREGISTER REQUEST LIST AFTER= " + str(self.req)
 			self.remove_elem([addr, processor], self.already_requested)
 			self.rid += 1
 			self.system_manager.register_set_notify_submit_answer(processor, self.rid, addr)	
@@ -439,7 +438,7 @@ class RegisterSet(GenericRegisterSet):
 	def prepare_request_list(self):
 		# some cache requests may take more time
 		# so it is best to extend the list and remove
-		# items when we respond to the PROCESSOR
+		# items when we respond to the PROCESSOR     ]
 		self.req.extend(self.sync_req.list)
 		self.sync_req.list = []
 	
@@ -511,12 +510,12 @@ class Processor(GenericProcessor):
 	def add_processes(self, process, scheduler):
 		self.sync_process.append(process)
 		self.scheduler = scheduler
-		dbg("~~~~~~PROCESSOR " + str(self) + " received a process from the SCHEDULER; process =" + str(process))
+		dbg("PROCESSOR     ] " + str(self) + " received a process from the SCHEDULER; process =" + str(process))
 		
 	#@echo.echo
 	def get_answer_from_Register(self, addr, value):
 		self.sync_register_answers.append([addr, value])
-		dbg("~~~~~~PROCESSOR" + str(self) + " received an answer from REGISTER for addr= " + str(addr) + " value= " + str(value))
+		dbg("PROCESSOR     ]" + str(self) + " received an answer from REGISTER for addr= " + str(addr) + " value= " + str(value))
 	
 	#@echo.echo
 	def is_in_answers(self, addr):
@@ -603,7 +602,6 @@ class Processor(GenericProcessor):
 	#@echo.echo
 	def run_process(self):	
 		if self.state == IDLE:
-			print "\n\n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!``````IDLEEE````````!!!!!!!!!!!!!!!!!!!\n\n"
 			
 			# If running the first time of if the processor finished all
 			# operations for this process get another process from the queue
@@ -631,8 +629,6 @@ class Processor(GenericProcessor):
 				self.state = IDLE
 				return
 			
-			print "\n\n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!``````BUSYYY````````!!!!!!!!!!!!!!!!!!!\n\n" 
-			
 			if self.sent_register_requests == 0:
 				return
 				
@@ -651,7 +647,7 @@ class Processor(GenericProcessor):
 	
 	
 	# Calculates the sum of all operations in all processes
-	# of the current PROCESSOR
+	# of the current PROCESSOR     ]
 	def get_sum_operations(self):
 		suma = 0
 		for process in self.process_requests:
@@ -659,7 +655,7 @@ class Processor(GenericProcessor):
 		return suma
 	
 	# Sends the sum of all operations in all processes
-	# of the current PROCESSOR to the SCHEDULER
+	# of the current PROCESSOR     ] to the SCHEDULER    ]
 	def reply_to_scheduler(self):
 		suma = self.get_sum_operations()
 		self.scheduler.get_processor_info_from_Processor([self, suma])
@@ -720,7 +716,7 @@ class ProcessScheduler(GenericProcessScheduler):
 	#@echo.echo
 	def submit_process(self, process):
 		self.sync_process.append(process)
-		dbg("~~~~~~SCHEDULER " + str(self) + " received a process from SYSTEM_MANAGER; process= " + str(process))
+		dbg("SCHEDULER    ] " + str(self) + " received a process from SYSTEM_MANAGER; process= " + str(process))
 
 	#@echo.echo
 	#TODO se joaca cu lista procesorului. trebuie sincronizat
@@ -734,7 +730,7 @@ class ProcessScheduler(GenericProcessScheduler):
 	
 	def get_processor_info_from_Processor(self, info):
 		self.sync_process_info.append(info)
-		dbg("~~~~~~SCHEDULER " + str(self) + " received processor info from PROCESSOR = " + str(info[0]) + " info= " + str(info[1]))
+		dbg("SCHEDULER    ]" + str(self) + " received processor info from PROCESSOR= " + str(info[0]) + " info= " + str(info[1]))
 	
 	#@echo.echo
 	def schedule_processes(self):
@@ -781,7 +777,7 @@ def init():
 	pass
 
 def dbg(msg):
-	print "\n" + msg
+	print "[" + msg + "\n"
 
 	
 def get_RAM(num_ram_cells, num_ram_requests_per_time_step, system_manager):
