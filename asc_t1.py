@@ -101,7 +101,7 @@ class Ram(GenericRAM):
 			
 			cache.get_answer_from_Ram(addr, value)
 			self.system_manager.ram_notify_submit_answer(cache, rid, addr)
-			dbg("RAM          ]" + str(self) + " is responding to CACHE for addr= " + str(addr) + " value= " + str(value))
+			dbg("RAM          ] " + str(self) + " is responding to CACHE for addr= " + str(addr) + " value= " + str(value))
 	
 	# Prepares the lists for a new time step
 	##@echo.echo
@@ -258,7 +258,7 @@ class Cache(GenericCache):
 			if value == None:
 				continue
 			
-			dbg("CACHE        ]" + str(self) + " is responding to REGISTER for addr= " + str(addr) + " value= " + str(value))
+			dbg("CACHE        ] " + str(self) + " is responding to REGISTER for addr= " + str(addr) + " value= " + str(value))
 			register.get_answer_from_Cache(addr, value)
 			self.remove_elem([addr, value], self.req)
 			self.remove_elem([addr, register], self.already_requested)
@@ -362,12 +362,12 @@ class RegisterSet(GenericRegisterSet):
 	#@echo.echo
 	def request(self, addr, processor, processor_rid):
 		self.sync_req.append([addr, processor, processor_rid])
-		dbg("PROCESSOR    ]" + str(processor) + " is requesting REGISTER for addr= " + str(addr))
+		dbg("PROCESSOR    ] " + str(processor) + " is requesting REGISTER for addr= " + str(addr))
 
 	#@echo.echo
 	def get_answer_from_Cache(self, addr, value):
 		self.sync_answer.append([addr, value])
-		dbg("REGISTER     ]" + str(self) + " received answer from CACHE for addr= " + str(addr) + " value= " + str(value))
+		dbg("REGISTER     ]  " + str(self) + " received answer from CACHE for addr= " + str(addr) + " value= " + str(value))
 	
 	#@echo.echo
 	def process_cache_answers(self):
@@ -515,7 +515,7 @@ class Processor(GenericProcessor):
 	#@echo.echo
 	def get_answer_from_Register(self, addr, value):
 		self.sync_register_answers.append([addr, value])
-		dbg("PROCESSOR     ]" + str(self) + " received an answer from REGISTER for addr= " + str(addr) + " value= " + str(value))
+		dbg("PROCESSOR     ] " + str(self) + " received an answer from REGISTER for addr= " + str(addr) + " value= " + str(value))
 	
 	#@echo.echo
 	def is_in_answers(self, addr):
@@ -730,7 +730,7 @@ class ProcessScheduler(GenericProcessScheduler):
 	
 	def get_processor_info_from_Processor(self, info):
 		self.sync_process_info.append(info)
-		dbg("SCHEDULER    ]" + str(self) + " received processor info from PROCESSOR= " + str(info[0]) + " info= " + str(info[1]))
+		dbg("SCHEDULER    ] " + str(self) + " received processor info from PROCESSOR= " + str(info[0]) + " info= " + str(info[1]))
 	
 	#@echo.echo
 	def schedule_processes(self):
