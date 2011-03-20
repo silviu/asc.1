@@ -164,10 +164,15 @@ class Cache(GenericCache):
 	# it is added to the CACHE
 	#@echo.echo
 	def set_cell_value(self, addr, value):
-		for i, cache_cell in enumerate(self.cache):
+		i = 0
+		for cache_cell in self.cache:
+			if cache_cell == None:
+				i += 1
+				continue
 			if cache_cell[0] == addr:
-				cache_cell[1] = value
+				self.cache[i] = value
 				return i
+			i += 1
 		self.cache.append([addr, value])
 		return len(self.cache)
 	
