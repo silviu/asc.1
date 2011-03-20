@@ -511,7 +511,11 @@ class Processor(GenericProcessor):
 		self.operand = self.operation[0]
 		self.addr1   = self.operation[1]
 		self.addr2   = self.operation[2]
-	
+		if self.operand == "+":
+			self.result  = 0
+		else:
+			self.result = 1
+		self.system_manager.processor_notify_start_executing_next_operation(self.process)
 	
 	def remove_element(self, elem):
 		for process in self.old_process:
@@ -553,20 +557,17 @@ class Processor(GenericProcessor):
 				self.state = IDLE
 				return
 			
-			print "\n\n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!``````BUSYYY````````!!!!!!!!!!!!!!!!!!!\n\n"
-			self.system_manager.processor_notify_start_executing_next_operation(self.process) 
+			print "\n\n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!``````BUSYYY````````!!!!!!!!!!!!!!!!!!!\n\n" 
 			if self.sent_register_requests == self.register_answers.get_len():
 				if self.operand == "+":
-					x = 0
 					for answer in self.register_answers.list:
-						x += answer[1]
+						self.result += answer[1]
 				elif self.operand == "*":
-					x = 1
 					for answer in self.register_answers.list:
-						x *= answer[1]
+						self.result *= answer[1]
 				
 				self.process.inc_number_of_executed_operations()
-				self.system_manager.processor_notify_finish_executing_operation(x)
+				self.system_manager.processor_notify_finish_executing_operation(self.result)
 				self.state = IDLE
 	
 	
@@ -619,8 +620,8 @@ class Processor(GenericProcessor):
 			
 			# First time it enters for both are 0
 			if len(self.old_process) > 0:
-				self.prepare_answer_list()
 				self.run_process()
+				self.prepare_answer_list()
 			barrier.end_process_answers(self)
 			
 
