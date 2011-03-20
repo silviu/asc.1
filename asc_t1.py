@@ -141,13 +141,21 @@ class Cache(GenericCache):
 		self.ram_rid = 0
 		self.reg_rid = 0
 		
+		self.already_requested = []
+		
 		self.curr_answer = Synced_list()
 		self.old_answer = []
 		
 		self.curr_req = Synced_list()
 		self.old_req = []
 	
-	
+	# Checks if a request from CACHE to RAM for address
+	# has been already cast
+	def if_already_requested(self, request_to_check):
+		for request in self.already_requested:
+			if request == request_to_check:
+				return True
+		return False
 	
 	# Tries to get the value from the CACHE at "addr" address
 	# If the "addr" address is not mapped in the cache
@@ -209,17 +217,20 @@ class Cache(GenericCache):
 			# de request in the curr_req so that it will be
 			# processed at the next time step
 			if value == None:
+				if self.if_already_requested([addr, self]):
+					continue
 				self.ram.request(addr, self)
+				self.already_requested.append([addr, self])
 				self.ram_rid += 1
 				self.system_manager.cache_notify_submit_request(self.ram_rid, addr)
 				self.curr_req.append([addr, register])
 	
 	
 	
-	def remove_element(self, elem):
-		for request in self.old_req:
-			if request == elem:
-				self.old_req.remove(request)
+	def remove_elem(self, elem_to_remove, the_list):
+		for elem in the_list:
+			if elem == elem_to_remove:
+				the_list.remove(elem)
 				return
 	
 	
@@ -247,7 +258,9 @@ class Cache(GenericCache):
 			
 			dbg("~~~~~~CACHE " + str(self) + " is responding to REGISTER for addr= " + str(addr) + " value= " + str(value))
 			register.get_answer_from_Cache(addr, value)
-			self.remove_element([addr, value])
+			self.remove_elem([addr, value], self.old_req)
+			self.remove_elem([addr, register], self.already_requested)
+			
 			self.reg_rid += 1
 			self.system_manager.cache_notify_submit_answer(register, self.reg_rid, addr)
 	
@@ -308,7 +321,7 @@ class RegisterSet(GenericRegisterSet):
 		self.curr_answer = Synced_list()
 		self.old_answer  = []
 	
-	# Checks if a request from processor for address
+	# Checks if a request from REGISTER to CACHE for address
 	# has been already cast
 	def if_already_requested(self, request_to_check):
 		for request in self.already_requested:
