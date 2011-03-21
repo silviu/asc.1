@@ -110,7 +110,7 @@ class Ram(GenericRAM):
 		
 		for r in req_copy:
 			
-			if (requests_done >= self.num_ram_requests_per_time_step):
+			if (requests_done > self.num_ram_requests_per_time_step):
 				return
 				
 			addr  = r[0]
@@ -120,6 +120,7 @@ class Ram(GenericRAM):
 			
 			cache.get_answer_from_Ram(addr, value)
 			self.system_manager.ram_notify_submit_answer(cache, rid, addr)
+			requests_done += 1
 			requests_to_remove.append([addr, cache, rid])
 			dbg("RAM          ] " + str(self) + " is responding to CACHE for addr= " + str(addr) + " value= " + str(value))
 		
@@ -349,9 +350,9 @@ class Cache(GenericCache):
 			
 
 			if len(self.req) > 0:
-				print "\n[CACHE INFO B ] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
+				#print "\n[CACHE INFO B ] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
 				self.respond_requests()
-				print "\n[CACHE INFO A ] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
+				#print "\n[CACHE INFO A ] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
 			barrier.end_reply_requests(self)
 			
 			
@@ -544,9 +545,9 @@ class RegisterSet(GenericRegisterSet):
 				self.process_cache_answers()
 			
 			if len(self.req) > 0:
-				print "\n[REGISTER INFO B] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
+				#print "\n[REGISTER INFO B] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
 				self.respond_requests()
-				print "\n[REGISTER INFO A] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
+				#print "\n[REGISTER INFO A] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
 			
 			barrier.end_reply_requests(self)
 
