@@ -76,10 +76,10 @@ class Ram(GenericRAM):
 		self.num_ram_requests_per_time_step = num_ram_requests_per_time_step
 		self.system_manager = system_manager
 		self.ram = [None] * num_ram_cells
-		self.my_time = 0
 		
 		self.sync_req = Synced_list()
 		self.req = []
+		self.old_requests = []
 	
 	# Sets RAM cell at addr address to value
 	#@echo.echo
@@ -90,7 +90,6 @@ class Ram(GenericRAM):
 	# Returns the RAM value at addr address
 	##@echo.echo
 	def get_cell_value(self, addr):
-		print "ADDDDDDDDDDDDDDDDDDDDDDDDDDDDd=" + str(addr)
 		return self.ram[addr]
 		
 	
@@ -106,22 +105,18 @@ class Ram(GenericRAM):
 	##@echo.echo
 	def respond_requests(self):
 		requests_done = 0
-		req_copy = self.req
+		req_copy = self.old_requests
 		requests_to_remove = []
 		
 		for r in req_copy:
 			
 			if (requests_done > self.num_ram_requests_per_time_step):
-				break
-			
-			if (r[1] == self.my_time):
-				continue
-			
-			addr  = r[0][0]
-			print "R[0]= " + str(r[0])
-			value = self.get_cell_value(r[0][0])
-			cache = r[0][1]
-			rid = r[0][2]
+				return
+				
+			addr  = r[0]
+			value = self.get_cell_value(r[0])
+			cache = r[1]
+			rid = r[2]
 			
 			cache.get_answer_from_Ram(addr, value)
 			self.system_manager.ram_notify_submit_answer(cache, rid, addr)
@@ -129,17 +124,14 @@ class Ram(GenericRAM):
 			requests_to_remove.append([addr, cache, rid])
 			dbg("RAM          ] " + str(self) + " is responding to CACHE for addr= " + str(addr) + " value= " + str(value))
 		
-		req_copy = self.req
 		for rem in requests_to_remove:
-			for request in req_copy:
-				if request[0][0] == rem[0]:
-					self.req.remove(request)
+			if rem in self.old_requests:
+				self.old_requests.remove(rem)
 	
 	# Prepares the lists for a new time step
 	##@echo.echo
 	def prepare_list(self):
-		for request in self.sync_req.list:
-			self.req.append((request, self.my_time))
+		self.req = self.sync_req.list
 		self.sync_req.list = []
 	
 	##@echo.echo
@@ -155,12 +147,12 @@ class Ram(GenericRAM):
 			self.prepare_list()
 			barrier.end_process_requests(self)
 			
-			if len(self.req) > 0:
+			if len(self.old_requests) > 0:
 				self.respond_requests()
 			barrier.end_reply_requests(self)
 			
 			# aici pun elemente in lista 3. lista din care trimit raspunsuri
-			self.my_time += 1
+			self.old_requests.extend(self.req)
 			barrier.end_process_answers(self)
 			
 
@@ -182,7 +174,7 @@ class Cache(GenericCache):
 		self.system_manager = system_manager
 		self.cache = num_cache_cells * [Memory_cell(None, None, 0)]
 		self.ram_rid = 0
-		self.my_time = 0
+
 		
 		self.already_requested = []
 		
@@ -293,10 +285,10 @@ class Cache(GenericCache):
 		alreadys_to_remove = []
 		
 		for r in req_copy:
-			addr  = r[0][0]
-			value = self.get_cell_value(r[0][0])
-			register = r[0][1]
-			reg_rid = r[0][2]
+			addr  = r[0]
+			value = self.get_cell_value(r[0])
+			register = r[1]
+			reg_rid = r[2]
 			
 			# If the value is still not in the CACHE
 			# check if it in the answers list
@@ -319,11 +311,10 @@ class Cache(GenericCache):
 			requests_to_remove.append([addr, register, reg_rid])
 			alreadys_to_remove.append([addr, register])
 			
-		req_copy = self.req
+
+		
 		for rem in requests_to_remove:
-			for request in req_copy:
-				if request[0][0] == rem[0]:
-					self.req.remove(request)
+			self.remove_elem(rem, self.req)
 		
 		for alr in alreadys_to_remove:
 			self.remove_elem(alr, self.already_requested)
@@ -332,10 +323,10 @@ class Cache(GenericCache):
 	# Prepares the lists for a new time step
 	#@echo.echo
 	def prepare_request_list(self):
-		for request in self.sync_req.list:
-			self.req.append((request, self.my_time))
+		self.req.extend(self.sync_req.list)
 		self.sync_req.list = []
-		
+	
+	
 	def prepare_answer_list(self):
 		self.answer_list = self.sync_answer.list
 		self.sync_answer.list = []
@@ -365,7 +356,6 @@ class Cache(GenericCache):
 			
 			
 			self.prepare_answer_list()
-			self.my_time += 1
 			barrier.end_process_answers(self)
 			
 			
@@ -378,7 +368,6 @@ class RegisterSet(GenericRegisterSet):
 		self.system_manager = system_manager
 		self.register_set = num_register_cells * [Memory_cell(None, None, 0)]
 		self.cache_rid = 0
-		self.my_time = 0
 		
 		self.already_requested = []
 		
@@ -580,7 +569,6 @@ class Processor(GenericProcessor):
 		self.operations_left = 0
 		self.sent_register_requests = 0
 		self.operand = None
-		self.my_time = 0
 		
 		self.sync_process = Synced_list()
 		self.process_requests = []
@@ -795,7 +783,6 @@ class ProcessScheduler(GenericProcessScheduler):
 		
 		self.process_info = []
 		self.sync_process_info = Synced_list()
-		self.my_time = 0
 		
 		self.usable_processes = []
 		self.intermediary = []
