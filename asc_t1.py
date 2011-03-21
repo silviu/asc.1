@@ -606,6 +606,7 @@ class Processor(GenericProcessor):
 		self.operations_left = 0
 		self.sent_register_requests = 0
 		self.operand = None
+		self.my_time = 0
 		
 		self.sync_process = Synced_list()
 		self.process_requests = []
@@ -660,7 +661,7 @@ class Processor(GenericProcessor):
 		#	sync_op = proc.get_number_of_executed_operations()
 		#	if sync_op == max_op:
 		#		return proc
-		return self.process_requests[0]
+		return self.process_requests[0].o
 
 	
 	def send_register_requests(self):
@@ -761,7 +762,8 @@ class Processor(GenericProcessor):
 	# of the current PROCESSOR     ]
 	def get_sum_operations(self):
 		suma = 0
-		for process in self.process_requests:
+		for tprocess in self.process_requests:
+			process = tprocess.o
 			suma += process.get_number_of_operations()
 		return suma
 	
@@ -774,7 +776,8 @@ class Processor(GenericProcessor):
 	# Prepares the lists for a new time step
 	#@echo.echo
 	def prepare_request_lists(self):
-		self.process_requests.extend(self.sync_process.list)
+		for r in self.sync_process.list:
+			self.process_requests.append(Time_cell(self.my_time, r))
 		self.sync_process.list = []
 	
 	def prepare_answer_list(self):
@@ -786,6 +789,7 @@ class Processor(GenericProcessor):
 		self.system_manager.register_processor(self)
 		global EXIT_TIME
 		while(1):
+			self.my_time += 1
 			if EXIT_TIME:
 				return
 			
