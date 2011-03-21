@@ -4,6 +4,7 @@ from asc_t1_defs import *
 from synced_list import *
 import echo
 import sys
+import time
 
 global barrier, N_Threads, IDLE, BUSY
 N_Threads = 0
@@ -153,7 +154,11 @@ class Ram(GenericRAM):
 			self.old_requests.extend(self.req)
 			barrier.end_process_answers(self)
 			
-
+class Memory_cell:
+	def __init__(self, address, value, timestamp):
+		self.address = address
+		self.value = value
+		self.timestamp = timestamp
 
 class Cache(GenericCache):
 	def __init__(self, num_cache_cells, ram, system_manager):
@@ -161,7 +166,7 @@ class Cache(GenericCache):
 		self.num_cache_cells = num_cache_cells
 		self.ram = ram
 		self.system_manager = system_manager
-		self.cache = num_cache_cells * [None]
+		self.cache = num_cache_cells * [Memory_cell(None, None, 0)]
 		self.ram_rid = 0
 
 		
@@ -187,10 +192,10 @@ class Cache(GenericCache):
 	#@echo.echo
 	def get_cell_value(self, addr):
 		for cache_cell in self.cache:
-			if cache_cell == None:
+			if cache_cell.address == None:
 				continue
-			if cache_cell[0] == addr:
-				return cache_cell[1]
+			if cache_cell.address == addr:
+				return cache_cell.value
 		return None
 	
 	
@@ -201,15 +206,19 @@ class Cache(GenericCache):
 	#@echo.echo
 	def set_cell_value(self, addr, value):
 		# look for first empty cell
-		for i in range(self.num_cache_cells):
-			if self.cache[i] == None:
-				self.cache.insert(i, [addr, value])
-				return i
-
+		min_time = 0
+		i = 0
+		saved_position = 0
+		
+		for cache_cell in self.cache:
+			if cache_cell.timestamp < min_time:
+				min_time = cache_cell.timestamp
+				saved_position = i
+			i += 1
 		# if there are no more empty cells
 		# default on overwriting cell 0
-		self.cache.insert(0, [addr, value])
-		return 0
+		self.cache.insert(saved_position, Memory_cell(addr, value, time.time()))
+		return saved_position
 	
 	
 	
@@ -348,7 +357,7 @@ class RegisterSet(GenericRegisterSet):
 		self.num_register_cells = num_register_cells
 		self.cache = cache
 		self.system_manager = system_manager
-		self.register_set = num_register_cells * [None]
+		self.register_set = num_register_cells * [Memory_cell(None, None, 0)]
 		self.cache_rid = 0
 		
 		self.already_requested = []
@@ -373,10 +382,10 @@ class RegisterSet(GenericRegisterSet):
 	#@echo.echo
 	def get_cell_value(self, addr):
 		for register_cell in self.register_set:
-			if register_cell == None:
+			if register_cell.address == None:
 				continue
-			if register_cell[0] == addr:
-				return register_cell[1]
+			if register_cell.address == addr:
+				return register_cell.value
 		return None
 	
 	# Tries to find the mapped address of the RAM address "addr" 
@@ -385,15 +394,19 @@ class RegisterSet(GenericRegisterSet):
 	#@echo.echo
 	def set_cell_value(self, addr, value):
 		# Look for the first empty cell and and value there
-		for i in range(self.num_register_cells):
-			if self.register_set[i] == None:
-				self.register_set.insert(i, [addr, value])
-				return i
+		min_time = 0
+		i = 0
+		saved_position = 0
 		
-		# If there are no more empty cells default on overwriting 
-		# the first cell
-		self.register_set.insert(0, [addr, value])
-		return 0
+		for register_cell in self.register_set:
+			if register_cell.timestamp < min_time:
+				min_time = register_cell.timestamp
+				saved_position = i
+			i += 1
+		# if there are no more empty cells
+		# default on overwriting cell 0
+		self.register_set.insert(saved_position, Memory_cell(addr, value, time.time()))
+		return saved_position
 	
 	# Accepts requests from the processor it is connected to
 	#@echo.echo
