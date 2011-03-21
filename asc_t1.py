@@ -454,6 +454,7 @@ class RegisterSet(GenericRegisterSet):
 			processor.get_answer_from_Register(addr, value)
 			requests_to_remove.append([addr, processor, processor_rid])
 			alreadys_to_remove.append([addr, processor])
+			print "\n\n $$$$$$$$$$REGISTER_SET= " + str(self.register_set) 
 			self.system_manager.register_set_notify_submit_answer(processor, processor_rid, addr)	
 		
 		for rem in requests_to_remove:			
@@ -496,15 +497,17 @@ class RegisterSet(GenericRegisterSet):
 			barrier.end_process_requests(self)
 			
 			# Replying to requests
+			# Processing answers
+			if len(self.req) > 0:
+				self.process_cache_answers()
+			
 			if len(self.req) > 0:
 				print "\n[REGISTER INFO B] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer)
 				self.respond_requests()
 				print "\n[REGISTER INFO A] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer)
+			
 			barrier.end_reply_requests(self)
 
-			# Processing answers
-			if len(self.req) > 0:
-				self.process_cache_answers()
 				
 			self.prepare_answer_lists()
 			barrier.end_process_answers(self)
