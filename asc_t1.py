@@ -106,6 +106,10 @@ class Ram(GenericRAM):
 		self.req = []
 		self.old_requests = []
 	
+	def remove_elem(self, elem_to_remove, the_list):
+		if elem_to_remove in the_list:
+			the_list.remove(elem_to_remove)
+	
 	# Sets RAM cell at addr address to value
 	#@echo.echo
 	def set_cell_value(self, addr, value):
@@ -153,8 +157,8 @@ class Ram(GenericRAM):
 			dbg("RAM          ] " + str(self) + " is responding to CACHE for addr= " + str(addr) + " value= " + str(value))
 		
 		for rem in requests_to_remove:
-			if rem in self.old_requests:
-				self.old_requests.remove(rem)
+			self.remove_elem(rem, self.old_requests)
+		
 	
 	# Prepares the lists for a new time step
 	##@echo.echo
@@ -307,11 +311,8 @@ class Cache(GenericCache):
 	
 	
 	def remove_elem(self, elem_to_remove, the_list):
-		for elem in the_list:
-			if elem == elem_to_remove:
-				the_list.remove(elem_to_remove)
-				return
-	
+		if elem_to_remove in the_list:
+			the_list.remove(elem_to_remove)
 	
 	
 	# Responds to each REGISTER for its request
@@ -864,6 +865,8 @@ class ProcessScheduler(GenericProcessScheduler):
 	def get_cpu(self, nr_operations):
 		min_proc = sys.maxint
 		saved_cpu = self.processor_list[0]
+		saved_i = 0
+		
 		print "\nCPU INFOOOOOO " + str(self.process_info)
 		for i in range(len(self.process_info)):
 			pr = self.process_info[i]
@@ -872,7 +875,8 @@ class ProcessScheduler(GenericProcessScheduler):
 			if suma < min_proc:
 				min_proc = suma
 				saved_cpu = cpu
-		self.process_info[i][1] += nr_operations
+				saved_i = i
+		self.process_info[saved_i][1] += nr_operations
 		return saved_cpu
 	
 	def get_processor_info_from_Processor(self, info):
