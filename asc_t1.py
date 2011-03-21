@@ -787,13 +787,13 @@ class ProcessScheduler(GenericProcessScheduler):
 		for process in self.process:
 			cpu = self.get_cpu()
 			cpu.add_processes(process, self)  # TRIMITERE CERERE
-			self.process.remove(process)
 			self.system_manager.scheduler_notify_submit_process(cpu, process)
+			self.process.remove(process)
 
 	# Prepares the lists for a new time step
 	#@echo.echo	
 	def prepare_request_lists(self):
-		self.process = self.sync_process.list
+		self.process.extend(self.sync_process.list)
 		self.sync_process.list = []
 	
 	def prepare_answer_lists(self):
@@ -809,6 +809,7 @@ class ProcessScheduler(GenericProcessScheduler):
 				return
 			
 			if len(self.process) > 0:
+				print "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 				self.schedule_processes()
 			barrier.end_requests(self)
 			
