@@ -127,7 +127,7 @@ class Ram(GenericRAM):
 			cache.get_answer_from_Ram(addr, value)
 			self.system_manager.ram_notify_submit_answer(cache, rid, addr)
 			requests_done += 1
-			requests_to_remove.append([addr, cache, rid])
+			requests_to_remove.append(r)
 			dbg("RAM          ] " + str(self) + " is responding to CACHE for addr= " + str(addr) + " value= " + str(value))
 		
 		for rem in requests_to_remove:
@@ -319,7 +319,7 @@ class Cache(GenericCache):
 			register.get_answer_from_Cache(addr, value)
 			self.system_manager.cache_notify_submit_answer(register, reg_rid, addr)
 						
-			requests_to_remove.append([addr, register, reg_rid])
+			requests_to_remove.append(r)
 			alreadys_to_remove.append([addr, register])
 			
 
@@ -512,7 +512,7 @@ class RegisterSet(GenericRegisterSet):
 			processor.get_answer_from_Register(addr, value)
 			self.system_manager.register_set_notify_submit_answer(processor, processor_rid, addr)
 			
-			requests_to_remove.append([addr, processor, processor_rid])
+			requests_to_remove.append(r)
 			alreadys_to_remove.append([addr, processor])
 			#print "\n\n $$$$$$$$$$REGISTER_SET= " + str(self.register_set) 
 		
