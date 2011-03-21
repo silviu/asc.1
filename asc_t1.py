@@ -11,6 +11,7 @@ N_Threads = 1
 IDLE = 0
 BUSY = 1
 EXIT_TIME = False
+SCHEDULER = None
 
 class Synced_list():
 	
@@ -646,7 +647,6 @@ class Processor(GenericProcessor):
 	#@echo.echo
 	def add_processes(self, process, scheduler):
 		self.sync_process.append(process)
-		self.scheduler = scheduler
 		dbg("PROCESSOR     ] " + str(self) + " received a process from the SCHEDULER; process =" + str(process))
 		
 	#@echo.echo
@@ -793,7 +793,7 @@ class Processor(GenericProcessor):
 	# of the current PROCESSOR     ] to the SCHEDULER    ]
 	def reply_to_scheduler(self):
 		suma = self.get_sum_operations()
-		self.scheduler.get_processor_info_from_Processor([self, suma])
+		SCHEDULER.get_processor_info_from_Processor([self, suma])
 	
 	# Prepares the lists for a new time step
 	#@echo.echo
@@ -827,23 +827,25 @@ class Processor(GenericProcessor):
 			
 			# If there are any processes on this processor
 			# send info of them to the scheduler
-			if len(self.process_requests) > 0:
-				self.reply_to_scheduler()
+			
+			self.reply_to_scheduler()
 			barrier.end_reply_requests(self)
 			
 
 			if len(self.process_requests) > 0:
 				self.run_process()
-				self.prepare_answer_list()
+			self.prepare_answer_list()
 			barrier.end_process_answers(self)
 			
 
 class ProcessScheduler(GenericProcessScheduler):
 	def __init__(self, processor_list, system_manager):
+		global SCHEDULER
 		Thread.__init__(self)
 		self.processor_list = processor_list
 		self.system_manager = system_manager
 		self.my_time = 0
+		SCHEDULER = self
 		
 		self.process_info = []
 		self.sync_process_info = Synced_list()
@@ -856,20 +858,23 @@ class ProcessScheduler(GenericProcessScheduler):
 	#@echo.echo
 	def submit_process(self, process):
 		self.sync_process.append(process)
+		self.process_info.append([process, 0])
 		dbg("SCHEDULER    ] " + str(self) + " received a process from SYSTEM_MANAGER; process= " + str(process))
 
 	#@echo.echo
 	#TODO se joaca cu lista procesorului. trebuie sincronizat
-	def get_cpu(self):
+	def get_cpu(self, nr_operations):
 		min_proc = sys.maxint
 		saved_cpu = self.processor_list[0]
-		
-		for pr in self.process_info:
+		print "\nCPU INFOOOOOO " + str(self.process_info)
+		for i in range(len(self.process_info)):
+			pr = self.process_info[i]
 			cpu = pr[0]
 			suma = pr[1]
 			if suma < min_proc:
 				min_proc = suma
 				saved_cpu = cpu
+		self.process_info[i][1] += nr_operations
 		return saved_cpu
 	
 	def get_processor_info_from_Processor(self, info):
@@ -880,7 +885,8 @@ class ProcessScheduler(GenericProcessScheduler):
 	def schedule_processes(self):
 		for tproc in self.usable_processes:
 			proc = tproc.o
-			cpu = self.get_cpu()
+			nr_operations = proc.get_number_of_operations()
+			cpu = self.get_cpu(nr_operations)
 			cpu.add_processes(proc, self)  # TRIMITERE CERERE
 			self.system_manager.scheduler_notify_submit_process(cpu, proc)
 			self.usable_processes.remove(tproc)
