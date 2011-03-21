@@ -212,7 +212,6 @@ class Cache(GenericCache):
 	#@echo.echo
 	def set_cell_value(self, addr, value):
 		# look for first empty cell
-		print "TIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIMEEEEEEEEEEEE " + str(time.time())
 		min_time = time.time()
 		i = 0
 		saved_position = 0
@@ -226,7 +225,7 @@ class Cache(GenericCache):
 		# if there are no more empty cells
 		# default on overwriting cell 0
 		
-		print "SAVEDDDDDDDDDDDDDD POSITIOOOOOOOON: " + str(saved_position)
+		print "SAVEDDDD POSITIOON: " + str(saved_position)
 		self.cache.insert(saved_position, Memory_cell(addr, value, time.time()))
 		return saved_position
 	
@@ -367,7 +366,7 @@ class RegisterSet(GenericRegisterSet):
 		self.num_register_cells = num_register_cells
 		self.cache = cache
 		self.system_manager = system_manager
-		self.register_set = num_register_cells * [Memory_cell(None, None, 0.0)]
+		self.register_set = num_register_cells * [Memory_cell(None, None, 0)]
 		self.cache_rid = 0
 		
 		self.already_requested = []
@@ -498,7 +497,7 @@ class RegisterSet(GenericRegisterSet):
 			
 			requests_to_remove.append([addr, processor, processor_rid])
 			alreadys_to_remove.append([addr, processor])
-			print "\n\n $$$$$$$$$$REGISTER_SET= " + str(self.register_set) 
+			#print "\n\n $$$$$$$$$$REGISTER_SET= " + str(self.register_set) 
 		
 		for rem in requests_to_remove:			
 			self.remove_elem(rem, self.req)
@@ -855,7 +854,8 @@ def init():
 	barrier = ReBarrier()
 
 def dbg(msg):
-	print "[" + msg + "\n"
+	#print "[" + msg + "\n"
+	pass
 
 	
 def get_RAM(num_ram_cells, num_ram_requests_per_time_step, system_manager):
