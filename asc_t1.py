@@ -705,9 +705,10 @@ class Processor(GenericProcessor):
 		self.system_manager.processor_notify_start_executing_next_operation(self.process)
 	
 	def remove_element(self, elem):
-		for process in self.process_requests:
+		for tprocess in self.process_requests:
+			process = tprocess.o
 			if process == elem:
-				self.process_requests.remove(process)
+				self.process_requests.remove(tprocess)
 				return
 			
 	# Implements the behavour of the PROCESSOR
@@ -946,6 +947,4 @@ def wait_for_next_time_step(object, done):
 		EXIT_TIME = True
 		barrier.flood_release()
 		object.increase_time_step()
-
-
 
