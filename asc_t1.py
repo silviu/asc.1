@@ -68,6 +68,12 @@ class Barrier:
 			self.barrier.release()
 		self.regcritica.release()
 
+class Req_cache_to_ram:
+	def __init__(self, addr, cache, rid):
+		self.addr = addr
+		self.cache = cache
+		self.rid = rid
+
 class Ram(GenericRAM):
 	
 	def __init__(self, num_ram_cells, num_ram_requests_per_time_step, system_manager):
@@ -95,9 +101,9 @@ class Ram(GenericRAM):
 	
 	# Accepts requests from the CACHE
 	##@echo.echo
-	def request(self, addr, cache, rid):
-		self.sync_req.append([addr, cache, rid])
-		dbg("CACHE        ] " + str(cache) + " is requesting from RAM addr= " + str(addr) + " RID = " + str(rid))
+	def request(self, r_c_to_r):
+		self.sync_req.append(r_c_to_r)
+		dbg("CACHE        ] " + str(r_c_to_r.cache) + " is requesting from RAM addr= " + str(r_c_to_r.addr) + " RID = " + str(r_c_to_r.rid))
 	
 	
 	
@@ -113,10 +119,10 @@ class Ram(GenericRAM):
 			if (requests_done > self.num_ram_requests_per_time_step):
 				return
 				
-			addr  = r[0]
-			value = self.get_cell_value(r[0])
-			cache = r[1]
-			rid = r[2]
+			addr  = r.addr
+			value = self.get_cell_value(r.addr)
+			cache = r.cache
+			rid = r.rid
 			
 			cache.get_answer_from_Ram(addr, value)
 			self.system_manager.ram_notify_submit_answer(cache, rid, addr)
@@ -162,9 +168,14 @@ class Memory_cell:
 		self.address = address
 		self.value = value
 		self.timestamp = timestamp
-		
-		
 
+
+		
+class Req_register_to_cache:
+	def __init__(self, addr, register, rid):
+		self.addr = addr
+		self.register = register
+		self.rid = rid
 
 class Cache(GenericCache):
 	def __init__(self, num_cache_cells, ram, system_manager):
@@ -242,17 +253,17 @@ class Cache(GenericCache):
 	
 	# Accepts requests from REGISTERS and it adds them to a queue
 	#@echo.echo
-	def request(self, addr, register, reg_rid):
-		self.sync_req.append([addr, register, reg_rid])
-		dbg("REGISTER     ] " + str(register) + " is requesting from CACHE for addr= " + str(addr))
+	def request(self, r_r_to_c):
+		self.sync_req.append(r_r_to_c)
+		dbg("REGISTER     ] " + str(r_r_to_c.register) + " is requesting from CACHE for addr= " + str(r_r_to_c.addr))
 	
 	
 	
 	def send_ram_requests(self):
 		for r in self.req:
-			addr  = r[0]
-			value = self.get_cell_value(r[0])
-			register = r[1]
+			addr  = r.addr
+			value = self.get_cell_value(r.addr)
+			register = r.register
 
 			# If the address/value is not in the CACHE
 			# request the value from the RAM and maintain
@@ -262,7 +273,7 @@ class Cache(GenericCache):
 				if self.if_already_requested([addr, register]):
 					continue
 				dbg("CACHE        ] " + str(self) + " is requesting from RAM for addr= " + str(addr))
-				self.ram.request(addr, self, self.ram_rid)
+				self.ram.request(Req_cache_to_ram(addr, self, self.ram_rid))
 				self.already_requested.append([addr, register])
 				self.system_manager.cache_notify_submit_request(self.ram_rid, addr)
 				self.ram_rid += 1
@@ -285,10 +296,10 @@ class Cache(GenericCache):
 		alreadys_to_remove = []
 		
 		for r in req_copy:
-			addr  = r[0]
-			value = self.get_cell_value(r[0])
-			register = r[1]
-			reg_rid = r[2]
+			addr  = r.addr
+			value = self.get_cell_value(r.addr)
+			register = r.register
+			reg_rid = r.rid
 			
 			# If the value is still not in the CACHE
 			# check if it in the answers list
@@ -451,7 +462,7 @@ class RegisterSet(GenericRegisterSet):
 				if self.if_already_requested([addr, processor]):
 					continue
 				
-				self.cache.request(addr, self, self.cache_rid)
+				self.cache.request(Req_register_to_cache(addr, self, self.cache_rid))
 				self.system_manager.register_set_notify_submit_request(self.cache, self.cache_rid, addr)
 				self.already_requested.append([addr, processor])
 				self.cache_rid += 1
