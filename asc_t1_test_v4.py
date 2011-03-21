@@ -10,7 +10,7 @@ from asc_t1 import *
 __TOTAL_POINTS = 0
 StdOutLock = Lock()
 DEBUG_MODE = 1
-PRINT_STATISTICS = 1
+PRINT_STATISTICS = 0
 
 class SystemManager(Thread):
     def __init__(self, TMAX, num_caches, num_register_sets, num_processors, num_ram_cells, num_cache_cells, num_register_cells, num_ram_reqs_per_time_step, processor_register_dic, register_cache_dic, process_list, time_limit, max_max_processing_delay_for_bonus, bonus1, max_avg_processing_delay_for_bonus, bonus2, max_cost_for_bonus, bonus3):
@@ -905,7 +905,7 @@ def test1():
     TMAX = 40
     TIME_LIMIT = 30.0 # sec
     
-    lop1 = [["+", 0, 3]]
+    lop1 = [["+", 0, 3], ["+", 1, 2]]
     lop2 = [["*", 0, 1], ["*", 2, 3]]
     p1 = Process(lop1)
     p2 = Process(lop2)
@@ -1134,8 +1134,8 @@ if __name__=="__main__":
 	print "### TESTUL 1 ###"
 	test1()
 	print "PUNCTAJ DUPA PRIMUL TEST:", __TOTAL_POINTS
-   # print "### TESTUL 2 ###"
-   # test2()
+	#print "### TESTUL 2 ###"
+	#test2()
    # print "PUNCTAJ TOTAL DUPA PRIMELE DOUA TESTE:", __TOTAL_POINTS
    # print "### TESTUL 3 ###"
    # test3()
