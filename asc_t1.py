@@ -73,6 +73,11 @@ class Req_cache_to_ram:
 		self.addr = addr
 		self.cache = cache
 		self.rid = rid
+		
+class Time_cell:
+	def __init__(self, my_time, o):
+		self.my_time = my_time
+		self.o = o
 
 class Ram(GenericRAM):
 	
@@ -82,6 +87,7 @@ class Ram(GenericRAM):
 		self.num_ram_requests_per_time_step = num_ram_requests_per_time_step
 		self.system_manager = system_manager
 		self.ram = [None] * num_ram_cells
+		self.my_time = 0
 		
 		self.sync_req = Synced_list()
 		self.req = []
@@ -114,8 +120,8 @@ class Ram(GenericRAM):
 		req_copy = self.old_requests
 		requests_to_remove = []
 		
-		for r in req_copy:
-			
+		for tcr in req_copy:
+			r = tcr.o
 			if (requests_done > self.num_ram_requests_per_time_step):
 				return
 				
@@ -127,7 +133,7 @@ class Ram(GenericRAM):
 			cache.get_answer_from_Ram(addr, value)
 			self.system_manager.ram_notify_submit_answer(cache, rid, addr)
 			requests_done += 1
-			requests_to_remove.append(r)
+			requests_to_remove.append(tcr)
 			dbg("RAM          ] " + str(self) + " is responding to CACHE for addr= " + str(addr) + " value= " + str(value))
 		
 		for rem in requests_to_remove:
@@ -137,14 +143,17 @@ class Ram(GenericRAM):
 	# Prepares the lists for a new time step
 	##@echo.echo
 	def prepare_list(self):
-		self.req = self.sync_req.list
-		self.sync_req.list = []
+		self.req = []
+		for r in self.sync_req.list:
+			self.req.append(Time_cell(self.my_time, r))
+			self.sync_req.list = []
 	
 	##@echo.echo
 	def run(self):
 		self.system_manager.register_ram(self)
 		global EXIT_TIME
 		while(1):
+			self.my_time += 1
 			if EXIT_TIME:
 				return
 
