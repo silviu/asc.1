@@ -7,6 +7,7 @@ import sys
 
 global barrier, N_Threads, IDLE, BUSY
 N_Threads = 0
+barrier = None
 
 IDLE = 0
 BUSY = 1
@@ -62,7 +63,7 @@ class Barrier:
 	
 	def flood_release(self):
 		self.regcritica.acquire()
-		for i in range(N_Threads-1):
+		for i in range(N_Threads):
 			self.barrier.release()
 		self.regcritica.release()
 
@@ -793,7 +794,6 @@ class ProcessScheduler(GenericProcessScheduler):
 			if EXIT_TIME:
 				return
 			
-
 			if len(self.process) > 0:
 				self.schedule_processes()
 			barrier.end_requests(self)
@@ -856,6 +856,7 @@ def wait_for_next_time_step(object, done):
 		global EXIT_TIME, barrier
 		EXIT_TIME = True
 		barrier.flood_release()
-		exit()
+		object.increase_time_step()
+
 
 
