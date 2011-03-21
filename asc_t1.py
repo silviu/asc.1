@@ -80,7 +80,7 @@ class Ram(GenericRAM):
 		self.sync_req = Synced_list()
 		self.req = []
 		self.old_requests = []
-		self.usable_list = []
+		self.usable_requests = []
 	
 	# Sets RAM cell at addr address to value
 	#@echo.echo
@@ -106,7 +106,7 @@ class Ram(GenericRAM):
 	##@echo.echo
 	def respond_requests(self):
 		requests_done = 0
-		req_copy = self.usable_list
+		req_copy = self.usable_requests
 		requests_to_remove = []
 		
 		for r in req_copy:
@@ -126,8 +126,8 @@ class Ram(GenericRAM):
 			dbg("RAM          ] " + str(self) + " is responding to CACHE for addr= " + str(addr) + " value= " + str(value))
 		
 		for rem in requests_to_remove:
-			if rem in self.usable_list:
-				self.usable_list.remove(rem)
+			if rem in self.old_requests:
+				self.usable_requests.remove(rem)
 	
 	# Prepares the lists for a new time step
 	##@echo.echo
@@ -148,16 +148,15 @@ class Ram(GenericRAM):
 			self.prepare_list()
 			barrier.end_process_requests(self)
 			
-			if len(self.old_requests) > 0:
+			if len(self.usable_requests) > 0:
 				self.respond_requests()
 			barrier.end_reply_requests(self)
 			
 			# aici pun elemente in lista 3. lista din care trimit raspunsuri
 			if len(self.req) > 0:
 				self.old_requests.extend(self.req)
-			
 			if len(self.old_requests) > 0:
-				self.usable_list = self.old_requests
+				self.usable_requests = self.old_requests
 			barrier.end_process_answers(self)
 			
 
@@ -188,6 +187,7 @@ class Cache(GenericCache):
 		
 		self.sync_req = Synced_list()
 		self.req = []
+		self.usable_requests = []
 	
 	# Checks if a request from CACHE to RAM for address
 	# has been already cast
@@ -254,7 +254,7 @@ class Cache(GenericCache):
 	
 	
 	def send_ram_requests(self):
-		for r in self.req:
+		for r in self.usable_requests:
 			addr  = r[0]
 			value = self.get_cell_value(r[0])
 			register = r[1]
@@ -285,7 +285,7 @@ class Cache(GenericCache):
 	# Responds to each REGISTER for its request
 	#@echo.echo
 	def respond_requests(self):
-		req_copy = self.req
+		req_copy = self.usable_requests
 		requests_to_remove = []
 		alreadys_to_remove = []
 		
@@ -319,7 +319,7 @@ class Cache(GenericCache):
 
 		
 		for rem in requests_to_remove:
-			self.remove_elem(rem, self.req)
+			self.remove_elem(rem, self.usable_requests)
 		
 		for alr in alreadys_to_remove:
 			self.remove_elem(alr, self.already_requested)
@@ -345,7 +345,7 @@ class Cache(GenericCache):
 			if EXIT_TIME:
 				return
 			
-			if len(self.req) > 0:
+			if len(self.usable_requests) > 0:
 				self.send_ram_requests()
 			barrier.end_requests(self)
 					
@@ -353,13 +353,14 @@ class Cache(GenericCache):
 			barrier.end_process_requests(self)
 			
 
-			if len(self.req) > 0:
+			if len(self.usable_requests) > 0:
 				#print "\n[CACHE INFO B ] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
 				self.respond_requests()
 				#print "\n[CACHE INFO A ] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
 			barrier.end_reply_requests(self)
 			
-			
+			if len(self.req) > 0:
+				self.usable_requests = self.req
 			self.prepare_answer_list()
 			barrier.end_process_answers(self)
 			
@@ -378,6 +379,7 @@ class RegisterSet(GenericRegisterSet):
 		
 		self.sync_req = Synced_list()
 		self.req  = []
+		self.usable_requests = []
 		
 		self.sync_answer = Synced_list()
 		self.answer_list  = []
@@ -444,7 +446,7 @@ class RegisterSet(GenericRegisterSet):
 			
 	
 	def send_cache_requests(self):
-		for r in self.req:
+		for r in self.usable_requests:
 			addr  = r[0]
 			value = self.get_cell_value(r[0])
 			processor = r[1]
@@ -473,7 +475,7 @@ class RegisterSet(GenericRegisterSet):
 	def respond_requests(self):
 		requests_to_remove = []
 		alreadys_to_remove = []
-		req_copy = self.req
+		req_copy = self.usable_requests
 		
 		for r in req_copy:
 			addr  = r[0]
@@ -505,7 +507,7 @@ class RegisterSet(GenericRegisterSet):
 			#print "\n\n $$$$$$$$$$REGISTER_SET= " + str(self.register_set) 
 		
 		for rem in requests_to_remove:			
-			self.remove_elem(rem, self.req)
+			self.remove_elem(rem, self.usable_requests)
 			
 		for alr in alreadys_to_remove:
 			self.remove_elem(alr, self.already_requested)
@@ -535,7 +537,7 @@ class RegisterSet(GenericRegisterSet):
 				return
 			
 			# Accepting or sending requests
-			if len(self.req) > 0:
+			if len(self.usable_requests) > 0:
 				self.send_cache_requests()
 			barrier.end_requests(self)
 			
@@ -545,17 +547,18 @@ class RegisterSet(GenericRegisterSet):
 			
 			# Replying to requests
 			# Processing answers
-			if len(self.req) > 0:
+			if len(self.usable_requests) > 0:
 				self.process_cache_answers()
 			
-			if len(self.req) > 0:
+			if len(self.usable_requests) > 0:
 				#print "\n[REGISTER INFO B] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
 				self.respond_requests()
 				#print "\n[REGISTER INFO A] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
 			
 			barrier.end_reply_requests(self)
 
-				
+			if len(self.req) > 0:
+				self.usable_requests = self.req
 			self.prepare_answer_lists()
 			barrier.end_process_answers(self)
 			
@@ -862,6 +865,7 @@ def init():
 	global barrier
 	barrier = ReBarrier()
 	N_Threads = 1
+	EXIT_TIME = False
 
 def dbg(msg):
 	#print "[" + msg + "\n"
