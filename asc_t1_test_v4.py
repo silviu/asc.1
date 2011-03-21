@@ -605,7 +605,7 @@ class SystemManager(Thread):
         if (self.__processor_last_time_step[current_thread()] >= self.__t):
             self.__error = 1
             StdOutLock.acquire()
-            print "[SystemManager] EROARE FATALA: Procesorul=", processor, "a efectuat mai multe actiuni (start sau finish instructiune) la acelasi pas de timp"
+            print "[SystemManager] EROARE FATALA: Procesorul=", processor, "a efectuat mai multe actiuni (start) la acelasi pas de timp"
             StdOutLock.release()
             
         self.__processor_last_time_step[current_thread()] = self.__t
@@ -677,7 +677,7 @@ class SystemManager(Thread):
         if (self.__processor_last_time_step[current_thread()] >= self.__t):
             self.__error = 1
             StdOutLock.acquire()
-            print "[SystemManager] EROARE FATALA: Procesorul=", processor, "a efectuat mai multe actiuni (start sau finish instructiune) la acelasi pas de timp"
+            print "[SystemManager] EROARE FATALA: Procesorul=", processor, "a efectuat mai multe actiuni (finish ) la acelasi pas de timp"
             StdOutLock.release()
             
         self.__processor_last_time_step[current_thread()] = self.__t
