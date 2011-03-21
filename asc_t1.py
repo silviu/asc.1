@@ -6,9 +6,9 @@ import echo
 import sys
 import time
 
-global barrier, N_Threads, IDLE, BUSY
-N_Threads = 0
 barrier = None
+global N_Threads, IDLE, BUSY
+N_Threads = 0
 
 IDLE = 0
 BUSY = 1
@@ -785,6 +785,7 @@ class ProcessScheduler(GenericProcessScheduler):
 		self.process_info = []
 		self.sync_process_info = Synced_list()
 		
+		self.usable_processes = []
 		self.process  = []
 		self.sync_process = Synced_list()
 	
@@ -809,11 +810,11 @@ class ProcessScheduler(GenericProcessScheduler):
 	
 	#@echo.echo
 	def schedule_processes(self):
-		for process in self.process:
+		for proc in self.usable_processes:
 			cpu = self.get_cpu()
-			cpu.add_processes(process, self)  # TRIMITERE CERERE
-			self.system_manager.scheduler_notify_submit_process(cpu, process)
-			self.process.remove(process)
+			cpu.add_processes(proc, self)  # TRIMITERE CERERE
+			self.system_manager.scheduler_notify_submit_process(cpu, proc)
+			self.usable_processes.remove(proc)
 
 	# Prepares the lists for a new time step
 	#@echo.echo	
@@ -833,8 +834,7 @@ class ProcessScheduler(GenericProcessScheduler):
 			if EXIT_TIME:
 				return
 			
-			if len(self.process) > 0:
-				print "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+			if len(self.usable_processes) > 0:
 				self.schedule_processes()
 			barrier.end_requests(self)
 			
@@ -846,6 +846,7 @@ class ProcessScheduler(GenericProcessScheduler):
 			barrier.end_reply_requests(self)
 			
 			self.prepare_answer_lists()
+			self.usable_processes = self.process
 			barrier.end_process_answers(self)
 			
 
@@ -893,7 +894,7 @@ def wait_for_next_time_step(object, done):
 
 
 	if done == 1:
-		global EXIT_TIME, barrier
+		global EXIT_TIME
 		EXIT_TIME = True
 		barrier.flood_release()
 		object.increase_time_step()
