@@ -7,8 +7,7 @@ import sys
 import time
 
 barrier = None
-global N_Threads, IDLE, BUSY
-N_Threads = 0
+N_Threads = 1
 
 IDLE = 0
 BUSY = 1
@@ -785,6 +784,7 @@ class ProcessScheduler(GenericProcessScheduler):
 		self.sync_process_info = Synced_list()
 		
 		self.usable_processes = []
+		self.intermediary = []
 		self.process  = []
 		self.sync_process = Synced_list()
 	
@@ -845,13 +845,17 @@ class ProcessScheduler(GenericProcessScheduler):
 			barrier.end_reply_requests(self)
 			
 			self.prepare_answer_lists()
-			self.usable_processes = self.process
+			if len(self.intermediary) > 0:
+				self.usable_processes = self.intermediary
+			if len(self.process) > 0:
+				self.intermediary = self.process
 			barrier.end_process_answers(self)
 			
 
 def init():
 	global barrier
 	barrier = ReBarrier()
+	N_Threads = 1
 
 def dbg(msg):
 	#print "[" + msg + "\n"

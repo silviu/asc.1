@@ -277,7 +277,7 @@ class SystemManager(Thread):
             elif (time >= self.__t):
                 self.__error = 1
                 StdOutLock.acquire()
-                print "[SystemManager] EROARE FATALA: Se trimite un raspuns pentru o cerere mai devreme decat este permis"
+                print "[SystemManager] EROARE FATALA: Se trimite un raspuns pentru o cerere mai devreme decat este permis TIME= " + str(time) + " SELF__T= " + str(self.__t)
                 StdOutLock.release()
               
             self.__req_dic[key] = (dic_addr, -(self.__t))
@@ -747,7 +747,7 @@ class SystemManager(Thread):
                 if (time >= self.__t):
                     self.__error = 1
                     StdOutLock.acquire()
-                    print "[SystemManager] EROARE FATALA: Procesul este trimis de scheduler unui procesor mai devreme decat este permis"
+                    print "[SystemManager] EROARE FATALA: Procesul este trimis de scheduler unui procesor mai devreme decat este permis. TIME = " + str(time) + " SELT___T: " + str(self.__t)
                     StdOutLock.release()                    
                 found = 1
                 break
@@ -1136,7 +1136,7 @@ if __name__=="__main__":
 	print "PUNCTAJ DUPA PRIMUL TEST:", __TOTAL_POINTS
 	#print "### TESTUL 2 ###"
 	#test2()
-   # print "PUNCTAJ TOTAL DUPA PRIMELE DOUA TESTE:", __TOTAL_POINTS
+	#print "PUNCTAJ TOTAL DUPA PRIMELE DOUA TESTE:", __TOTAL_POINTS
 	#print "### TESTUL 3 ###"
 	#test3()
 	#print "PUNCTAJ TOTAL DUPA PRIMELE TREI TESTE:", __TOTAL_POINTS
