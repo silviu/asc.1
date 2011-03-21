@@ -1134,11 +1134,11 @@ if __name__=="__main__":
 	print "### TESTUL 1 ###"
 	test1()
 	print "PUNCTAJ DUPA PRIMUL TEST:", __TOTAL_POINTS
-	#print "### TESTUL 2 ###"
-	#test2()
-	#print "PUNCTAJ TOTAL DUPA PRIMELE DOUA TESTE:", __TOTAL_POINTS
-	#print "### TESTUL 3 ###"
-	#test3()
+	print "### TESTUL 2 ###"
+	test2()
+	print "PUNCTAJ TOTAL DUPA PRIMELE DOUA TESTE:", __TOTAL_POINTS
+	print "### TESTUL 3 ###"
+	test3()
 	#print "PUNCTAJ TOTAL DUPA PRIMELE TREI TESTE:", __TOTAL_POINTS
 
    # print "CU ACORDUL ASISTENTULUI, PUNCTAJUL MAXIM PE CARE IL POTI OBTINE PE TEMA ESTE:", __TOTAL_POINTS + 25

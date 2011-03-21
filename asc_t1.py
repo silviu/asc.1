@@ -1,8 +1,6 @@
 #!/usr/bin/python
 from threading import *
 from asc_t1_defs import *
-from synced_list import *
-import echo
 import sys
 import time
 
@@ -14,6 +12,20 @@ IDLE = 0
 BUSY = 1
 EXIT_TIME = False
 
+class Synced_list():
+	
+	def __init__(self):
+		self.lock = Lock()
+		self.list = []
+	
+	def append(self, elem):
+		self.lock.acquire()
+		self.list.append(elem)
+		self.lock.release()
+	
+	def get_len(self):
+		return len(self.list)
+
 class ReBarrier:
 	def __init__(self):
 		self.b1 = Barrier()
@@ -24,19 +36,19 @@ class ReBarrier:
 		self.b2.sync()
 	
 	def end_requests(self, whom):
-		#print "~~PAS 1~~ Thread " + str(whom) + " finished waiting for requests"
+		##print "~~PAS 1~~ Thread " + str(whom) + " finished waiting for requests"
 		self.sync()
 	
 	def end_process_requests(self, whom):
-		#print "~~PAS 2~~ Thread " + str(whom) + " finished processing requests"
+		##print "~~PAS 2~~ Thread " + str(whom) + " finished processing requests"
 		self.sync()
 	
 	def end_reply_requests(self, whom):
-		#print "~~PAS 3~~ Thread " + str(whom) + " finished replying to requests"
+		##print "~~PAS 3~~ Thread " + str(whom) + " finished replying to requests"
 		self.sync()
 	
 	def end_process_answers(self, whom):
-		#print "~~PAS 4~~ Thread " + str(whom) + " finished processing answers"
+		##print "~~PAS 4~~ Thread " + str(whom) + " finished processing answers"
 		self.sync()
 	
 	def flood_release(self):
@@ -124,7 +136,10 @@ class Ram(GenericRAM):
 			r = tcr.o
 			if (requests_done > self.num_ram_requests_per_time_step):
 				return
-				
+			
+			if (tcr.my_time == self.my_time):
+				continue
+			
 			addr  = r.addr
 			value = self.get_cell_value(r.addr)
 			cache = r.cache
@@ -245,7 +260,7 @@ class Cache(GenericCache):
 		# if there are no more empty cells
 		# default on overwriting cell 0
 		
-		print "SAVEDDDD POSITIOON: " + str(saved_position)
+		#print "SAVEDDDD POSITIOON: " + str(saved_position)
 		self.cache[saved_position] = Memory_cell(addr, value, time.time())
 		return saved_position
 	
@@ -312,6 +327,9 @@ class Cache(GenericCache):
 			register = r.register
 			reg_rid = r.rid
 			
+			if (tcr.my_time == self.my_time):
+				continue
+			
 			# If the value is still not in the CACHE
 			# check if it in the answers list
 			if value == None:
@@ -373,9 +391,9 @@ class Cache(GenericCache):
 			
 
 			if len(self.req) > 0:
-				#print "\n[CACHE INFO B ] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
+				##print "\n[CACHE INFO B ] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
 				self.respond_requests()
-				#print "\n[CACHE INFO A ] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
+				##print "\n[CACHE INFO A ] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
 			barrier.end_reply_requests(self)
 			
 			
@@ -510,6 +528,9 @@ class RegisterSet(GenericRegisterSet):
 			processor = r.cpu
 			processor_rid = r.rid
 			
+			if (tcr.my_time == self.my_time):
+				continue
+			
 			# If the address/value is not in the REGISTER yet
 			# it may be in the answer list from cache
 			if value == None:
@@ -531,7 +552,7 @@ class RegisterSet(GenericRegisterSet):
 			
 			requests_to_remove.append(tcr)
 			alreadys_to_remove.append([addr, processor])
-			#print "\n\n $$$$$$$$$$REGISTER_SET= " + str(self.register_set) 
+			##print "\n\n $$$$$$$$$$REGISTER_SET= " + str(self.register_set) 
 		
 		for rem in requests_to_remove:			
 			self.remove_elem(rem, self.req)
@@ -581,9 +602,9 @@ class RegisterSet(GenericRegisterSet):
 				self.process_cache_answers()
 			
 			if len(self.req) > 0:
-				#print "\n[REGISTER INFO B] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
+				##print "\n[REGISTER INFO B] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
 				self.respond_requests()
-				#print "\n[REGISTER INFO A] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
+				##print "\n[REGISTER INFO A] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
 			
 			barrier.end_reply_requests(self)
 
@@ -840,12 +861,16 @@ class ProcessScheduler(GenericProcessScheduler):
 	#@echo.echo
 	#TODO se joaca cu lista procesorului. trebuie sincronizat
 	def get_cpu(self):
-		#min_proc = sys.maxint
-		#for processor in self.processor_list:
-		#	if processor.get_process_number() < min_proc:
-		#		min_proc = processor.get_process_number()
-		#		saved_processor = processor
-		return self.processor_list[0]
+		min_proc = sys.maxint
+		saved_cpu = self.processor_list[0]
+		
+		for pr in self.process_info:
+			cpu = pr[0]
+			suma = pr[1]
+			if suma < min_proc:
+				min_proc = suma
+				saved_cpu = cpu
+		return saved_cpu
 	
 	def get_processor_info_from_Processor(self, info):
 		self.sync_process_info.append(info)
@@ -907,7 +932,7 @@ def init():
 	
 
 def dbg(msg):
-	#print "[" + msg + "\n"
+	##print "[" + msg + "\n"
 	pass
 
 	
