@@ -1134,8 +1134,8 @@ if __name__=="__main__":
 	print "### TESTUL 1 ###"
 	test1()
 	print "PUNCTAJ DUPA PRIMUL TEST:", __TOTAL_POINTS
-	print "### TESTUL 2 ###"
-	test2()
+	#print "### TESTUL 2 ###"
+	#test2()
 	#print "PUNCTAJ TOTAL DUPA PRIMELE DOUA TESTE:", __TOTAL_POINTS
 	#print "### TESTUL 3 ###"
 	#test3()

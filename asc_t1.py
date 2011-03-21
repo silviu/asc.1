@@ -784,8 +784,6 @@ class ProcessScheduler(GenericProcessScheduler):
 		self.process_info = []
 		self.sync_process_info = Synced_list()
 		
-		self.usable_processes = []
-		self.intermediary = []
 		self.process  = []
 		self.sync_process = Synced_list()
 	
@@ -810,11 +808,11 @@ class ProcessScheduler(GenericProcessScheduler):
 	
 	#@echo.echo
 	def schedule_processes(self):
-		for proc in self.usable_processes:
+		for proc in self.process:
 			cpu = self.get_cpu()
 			cpu.add_processes(proc, self)  # TRIMITERE CERERE
 			self.system_manager.scheduler_notify_submit_process(cpu, proc)
-			self.usable_processes.remove(proc)
+			self.process.remove(proc)
 
 	# Prepares the lists for a new time step
 	#@echo.echo	
@@ -834,7 +832,7 @@ class ProcessScheduler(GenericProcessScheduler):
 			if EXIT_TIME:
 				return
 			
-			if len(self.usable_processes) > 0:
+			if len(self.process) > 0:
 				self.schedule_processes()
 			barrier.end_requests(self)
 			
@@ -846,10 +844,6 @@ class ProcessScheduler(GenericProcessScheduler):
 			barrier.end_reply_requests(self)
 			
 			self.prepare_answer_lists()
-			if len(self.intermediary) > 0:
-				self.usable_processes = self.intermediary
-			if len(self.process) > 0:
-				self.intermediary = self.process
 			barrier.end_process_answers(self)
 			
 
