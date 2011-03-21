@@ -194,7 +194,7 @@ class Cache(GenericCache):
 		self.system_manager = system_manager
 		self.cache = num_cache_cells * [Memory_cell(None, None, 0)]
 		self.ram_rid = 0
-
+		self.my_time = 0
 		
 		self.already_requested = []
 		
@@ -269,7 +269,8 @@ class Cache(GenericCache):
 	
 	
 	def send_ram_requests(self):
-		for r in self.req:
+		for tcr in self.req:
+			r = tcr.o
 			addr  = r.addr
 			value = self.get_cell_value(r.addr)
 			register = r.register
@@ -304,7 +305,8 @@ class Cache(GenericCache):
 		requests_to_remove = []
 		alreadys_to_remove = []
 		
-		for r in req_copy:
+		for tcr in req_copy:
+			r = tcr.o
 			addr  = r.addr
 			value = self.get_cell_value(r.addr)
 			register = r.register
@@ -328,7 +330,7 @@ class Cache(GenericCache):
 			register.get_answer_from_Cache(addr, value)
 			self.system_manager.cache_notify_submit_answer(register, reg_rid, addr)
 						
-			requests_to_remove.append(r)
+			requests_to_remove.append(tcr)
 			alreadys_to_remove.append([addr, register])
 			
 
@@ -343,7 +345,8 @@ class Cache(GenericCache):
 	# Prepares the lists for a new time step
 	#@echo.echo
 	def prepare_request_list(self):
-		self.req.extend(self.sync_req.list)
+		for r in self.sync_req.list:
+			self.req.append(Time_cell(self.my_time, r))
 		self.sync_req.list = []
 	
 	
@@ -357,6 +360,7 @@ class Cache(GenericCache):
 		self.system_manager.register_cache(self)
 		global EXIT_TIME
 		while(1):
+			self.my_time += 1
 			if EXIT_TIME:
 				return
 			
