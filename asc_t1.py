@@ -822,6 +822,7 @@ class ProcessScheduler(GenericProcessScheduler):
 		Thread.__init__(self)
 		self.processor_list = processor_list
 		self.system_manager = system_manager
+		self.my_time = 0
 		
 		self.process_info = []
 		self.sync_process_info = Synced_list()
@@ -852,16 +853,18 @@ class ProcessScheduler(GenericProcessScheduler):
 	
 	#@echo.echo
 	def schedule_processes(self):
-		for proc in self.usable_processes:
+		for tproc in self.usable_processes:
+			proc = tproc.o
 			cpu = self.get_cpu()
 			cpu.add_processes(proc, self)  # TRIMITERE CERERE
 			self.system_manager.scheduler_notify_submit_process(cpu, proc)
-			self.usable_processes.remove(proc)
+			self.usable_processes.remove(tproc)
 
 	# Prepares the lists for a new time step
 	#@echo.echo	
 	def prepare_request_lists(self):
-		self.process.extend(self.sync_process.list)
+		for r in self.sync_process.list:
+			self.process.append(Time_cell(self.my_time, r))
 		self.sync_process.list = []
 	
 	def prepare_answer_lists(self):
@@ -873,6 +876,7 @@ class ProcessScheduler(GenericProcessScheduler):
 		self.system_manager.register_scheduler(self)
 		global EXIT_TIME
 		while(1):
+			self.my_time += 1
 			if EXIT_TIME:
 				return
 			
