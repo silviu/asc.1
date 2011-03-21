@@ -909,7 +909,7 @@ def test1():
     lop2 = [["*", 0, 1], ["*", 2, 3]]
     p1 = Process(lop1)
     p2 = Process(lop2)
-    process_list = [(3, p1)]
+    process_list = [(2, p2), (3, p1)]
 
     init();
 
@@ -1134,8 +1134,8 @@ if __name__=="__main__":
 	print "### TESTUL 1 ###"
 	test1()
 	print "PUNCTAJ DUPA PRIMUL TEST:", __TOTAL_POINTS
-	#print "### TESTUL 2 ###"
-	#test2()
+	print "### TESTUL 2 ###"
+	test2()
 	#print "PUNCTAJ TOTAL DUPA PRIMELE DOUA TESTE:", __TOTAL_POINTS
 	#print "### TESTUL 3 ###"
 	#test3()
