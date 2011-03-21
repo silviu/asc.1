@@ -843,5 +843,5 @@ def wait_for_next_time_step(object, done):
 	if done == 1:
 		global EXIT_TIME
 		EXIT_TIME = True
-		exit()
+
 
