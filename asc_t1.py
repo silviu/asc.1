@@ -36,6 +36,11 @@ class ReBarrier:
 	def end_process_answers(self, whom):
 		#print "~~PAS 4~~ Thread " + str(whom) + " finished processing answers"
 		self.sync()
+	
+	def flood_release(self):
+		for i in range(4):	
+			self.b1.flood_release()
+			self.b2.flood_release()
 
 class Barrier:
 	def __init__(self):
@@ -54,9 +59,12 @@ class Barrier:
 			self.n = 0
 		self.regcritica.release()
 		self.barrier.acquire()
-
-
-barrier = ReBarrier()
+	
+	def flood_release(self):
+		self.regcritica.acquire()
+		for i in range(N_Threads-1):
+			self.barrier.release()
+		self.regcritica.release()
 
 class Ram(GenericRAM):
 	
@@ -799,7 +807,8 @@ class ProcessScheduler(GenericProcessScheduler):
 			
 
 def init():
-	pass
+	global barrier
+	barrier = ReBarrier()
 
 def dbg(msg):
 	print "[" + msg + "\n"
@@ -841,7 +850,9 @@ def wait_for_next_time_step(object, done):
 
 
 	if done == 1:
-		global EXIT_TIME
+		global EXIT_TIME, barrier
 		EXIT_TIME = True
+		barrier.flood_release()
+		exit()
 
 

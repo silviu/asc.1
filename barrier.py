@@ -41,6 +41,9 @@ class Barrier:
 			self.n = self.nr_threads
 		self.regcritica.release()
 		self.barrier.acquire()
+	
+	def release_flood(self):
+		
 
 class Threads(Thread):
 	def __init__(self, barrier, idd):
