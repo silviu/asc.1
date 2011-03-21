@@ -80,6 +80,7 @@ class Ram(GenericRAM):
 		self.sync_req = Synced_list()
 		self.req = []
 		self.old_requests = []
+		self.usable_list = []
 	
 	# Sets RAM cell at addr address to value
 	#@echo.echo
@@ -105,7 +106,7 @@ class Ram(GenericRAM):
 	##@echo.echo
 	def respond_requests(self):
 		requests_done = 0
-		req_copy = self.old_requests
+		req_copy = self.usable_list
 		requests_to_remove = []
 		
 		for r in req_copy:
@@ -125,8 +126,8 @@ class Ram(GenericRAM):
 			dbg("RAM          ] " + str(self) + " is responding to CACHE for addr= " + str(addr) + " value= " + str(value))
 		
 		for rem in requests_to_remove:
-			if rem in self.old_requests:
-				self.old_requests.remove(rem)
+			if rem in self.usable_list:
+				self.usable_list.remove(rem)
 	
 	# Prepares the lists for a new time step
 	##@echo.echo
@@ -152,7 +153,11 @@ class Ram(GenericRAM):
 			barrier.end_reply_requests(self)
 			
 			# aici pun elemente in lista 3. lista din care trimit raspunsuri
-			self.old_requests.extend(self.req)
+			if len(self.req) > 0:
+				self.old_requests.extend(self.req)
+			
+			if len(self.old_requests) > 0:
+				self.usable_list = self.old_requests
 			barrier.end_process_answers(self)
 			
 
@@ -226,7 +231,7 @@ class Cache(GenericCache):
 		# default on overwriting cell 0
 		
 		print "SAVEDDDD POSITIOON: " + str(saved_position)
-		self.cache.insert(saved_position, Memory_cell(addr, value, time.time()))
+		self.cache[saved_position] = Memory_cell(addr, value, time.time())
 		return saved_position
 	
 	
@@ -416,7 +421,7 @@ class RegisterSet(GenericRegisterSet):
 		# if there are no more empty cells
 		# default on overwriting cell 0
 		
-		self.register_set.insert(saved_position, Memory_cell(addr, value, time.time()))
+		self.register_set[saved_position] = Memory_cell(addr, value, time.time())
 		return saved_position
 	
 	# Accepts requests from the processor it is connected to
@@ -784,6 +789,8 @@ class ProcessScheduler(GenericProcessScheduler):
 		self.process_info = []
 		self.sync_process_info = Synced_list()
 		
+		self.usable_processes = []
+		self.intermediary = []
 		self.process  = []
 		self.sync_process = Synced_list()
 	
@@ -808,11 +815,11 @@ class ProcessScheduler(GenericProcessScheduler):
 	
 	#@echo.echo
 	def schedule_processes(self):
-		for proc in self.process:
+		for proc in self.usable_processes:
 			cpu = self.get_cpu()
 			cpu.add_processes(proc, self)  # TRIMITERE CERERE
 			self.system_manager.scheduler_notify_submit_process(cpu, proc)
-			self.process.remove(proc)
+			self.usable_processes.remove(proc)
 
 	# Prepares the lists for a new time step
 	#@echo.echo	
@@ -832,7 +839,7 @@ class ProcessScheduler(GenericProcessScheduler):
 			if EXIT_TIME:
 				return
 			
-			if len(self.process) > 0:
+			if len(self.usable_processes) > 0:
 				self.schedule_processes()
 			barrier.end_requests(self)
 			
@@ -844,6 +851,10 @@ class ProcessScheduler(GenericProcessScheduler):
 			barrier.end_reply_requests(self)
 			
 			self.prepare_answer_lists()
+			if len(self.intermediary) > 0:
+				self.usable_processes = self.intermediary
+			if len(self.process) > 0:
+				self.intermediary = self.process
 			barrier.end_process_answers(self)
 			
 
