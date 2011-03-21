@@ -2,7 +2,7 @@
 from threading import *
 from asc_t1_defs import *
 import sys
-import time
+
 
 barrier = None
 
@@ -139,11 +139,8 @@ class Ram(GenericRAM):
 		
 		for tcr in req_copy:
 			r = tcr.o
-			if (requests_done-1 > self.num_ram_requests_per_time_step):
+			if (requests_done == self.num_ram_requests_per_time_step):
 				break
-			
-			if (tcr.my_time == self.my_time):
-				continue
 			
 			addr  = r.addr
 			value = self.get_cell_value(r.addr)
@@ -238,9 +235,8 @@ class Cache(GenericCache):
 	#@echo.echo
 	def get_cell_value(self, addr):
 		for cache_cell in self.cache:
-			if cache_cell.address == None:
-				continue
 			if cache_cell.address == addr:
+				cache_cell.my_time = self.my_time
 				return cache_cell.value
 		return None
 	
@@ -252,7 +248,7 @@ class Cache(GenericCache):
 	#@echo.echo
 	def set_cell_value(self, addr, value):
 		# look for first empty cell
-		min_time = time.time()
+		min_time = self.my_time
 		i = 0
 		saved_position = 0
 		
@@ -266,7 +262,7 @@ class Cache(GenericCache):
 		# default on overwriting cell 0
 		
 		#print "SAVEDDDD POSITIOON: " + str(saved_position)
-		self.cache[saved_position] = Memory_cell(addr, value, time.time())
+		self.cache[saved_position] = Memory_cell(addr, value, self.my_time)
 		return saved_position
 	
 	
@@ -442,9 +438,8 @@ class RegisterSet(GenericRegisterSet):
 	#@echo.echo
 	def get_cell_value(self, addr):
 		for register_cell in self.register_set:
-			if register_cell.address == None:
-				continue
 			if register_cell.address == addr:
+				register_cell.my_time = self.my_time
 				return register_cell.value
 		return None
 	
@@ -454,7 +449,7 @@ class RegisterSet(GenericRegisterSet):
 	#@echo.echo
 	def set_cell_value(self, addr, value):
 		# Look for the first empty cell and and value there
-		min_time = time.time()
+		min_time = sys.maxint
 		i = 0
 		saved_position = 0
 		
@@ -467,7 +462,7 @@ class RegisterSet(GenericRegisterSet):
 		# if there are no more empty cells
 		# default on overwriting cell 0
 		
-		self.register_set[saved_position] = Memory_cell(addr, value, time.time())
+		self.register_set[saved_position] = Memory_cell(addr, value, self.my_time)
 		return saved_position
 	
 	# Accepts requests from the processor it is connected to
@@ -908,6 +903,14 @@ class ProcessScheduler(GenericProcessScheduler):
 	def run(self):
 		self.system_manager.register_scheduler(self)
 		global EXIT_TIME
+		barrier.end_requests(object)
+		barrier.end_process_requests(object)
+		barrier.end_reply_requests(object)
+		barrier.end_process_answers(object)
+		barrier.end_requests(object)
+		barrier.end_process_requests(object)
+		barrier.end_reply_requests(object)
+		barrier.end_process_answers(object)
 		while(1):
 			self.my_time += 1
 			if EXIT_TIME:
