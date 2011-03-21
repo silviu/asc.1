@@ -398,6 +398,7 @@ class RegisterSet(GenericRegisterSet):
 		self.system_manager = system_manager
 		self.register_set = num_register_cells * [Memory_cell(None, None, 0)]
 		self.cache_rid = 0
+		self.my_time = 0
 		
 		self.already_requested = []
 		
@@ -469,7 +470,8 @@ class RegisterSet(GenericRegisterSet):
 			
 	
 	def send_cache_requests(self):
-		for r in self.req:
+		for tcr in self.req:
+			r = tcr.o
 			addr  = r.addr
 			value = self.get_cell_value(r.addr)
 			processor = r.cpu
@@ -496,11 +498,13 @@ class RegisterSet(GenericRegisterSet):
 	# Responds to the Processor for its request
 	#@echo.echo
 	def respond_requests(self):
-		requests_to_remove = []
+		requests_to_remove = []	
 		alreadys_to_remove = []
 		req_copy = self.req
 		
-		for r in req_copy:
+		for tcr in req_copy:
+			r = tcr.o
+			
 			addr  = r.addr
 			value = self.get_cell_value(r.addr)
 			processor = r.cpu
@@ -525,7 +529,7 @@ class RegisterSet(GenericRegisterSet):
 			processor.get_answer_from_Register(addr, value)
 			self.system_manager.register_set_notify_submit_answer(processor, processor_rid, addr)
 			
-			requests_to_remove.append(r)
+			requests_to_remove.append(tcr)
 			alreadys_to_remove.append([addr, processor])
 			#print "\n\n $$$$$$$$$$REGISTER_SET= " + str(self.register_set) 
 		
@@ -543,7 +547,8 @@ class RegisterSet(GenericRegisterSet):
 		# some cache requests may take more time
 		# so it is best to extend the list and remove
 		# items when we respond to the PROCESSOR     ]
-		self.req.extend(self.sync_req.list)
+		for r in self.sync_req.list:
+			self.req.append(Time_cell(self.my_time, r))
 		self.sync_req.list = []
 	
 	def prepare_answer_lists(self):
@@ -556,6 +561,8 @@ class RegisterSet(GenericRegisterSet):
 		self.system_manager.register_register_set(self)
 		global EXIT_TIME
 		while(1):
+			self.my_time += 1
+			
 			if EXIT_TIME:
 				return
 			
