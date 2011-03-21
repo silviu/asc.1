@@ -369,7 +369,13 @@ class Cache(GenericCache):
 			self.prepare_answer_list()
 			barrier.end_process_answers(self)
 			
-			
+	
+class Req_cpu_to_register:
+	def __init__(self, addr, cpu, rid):
+		self.addr = addr
+		self.cpu = cpu
+		self.rid = rid
+		
 
 class RegisterSet(GenericRegisterSet):
 	def __init__(self, num_register_cells, cache, system_manager):
@@ -432,9 +438,9 @@ class RegisterSet(GenericRegisterSet):
 	
 	# Accepts requests from the processor it is connected to
 	#@echo.echo
-	def request(self, addr, processor, processor_rid):
-		self.sync_req.append([addr, processor, processor_rid])
-		dbg("PROCESSOR    ] " + str(processor) + " is requesting REGISTER for addr= " + str(addr))
+	def request(self, r_cpu_to_reg):
+		self.sync_req.append(r_cpu_to_reg)
+		dbg("PROCESSOR    ] " + str( r_cpu_to_reg.cpu) + " is requesting REGISTER for addr= " + str( r_cpu_to_reg.addr))
 
 	#@echo.echo
 	def get_answer_from_Cache(self, addr, value):
@@ -451,9 +457,9 @@ class RegisterSet(GenericRegisterSet):
 	
 	def send_cache_requests(self):
 		for r in self.req:
-			addr  = r[0]
-			value = self.get_cell_value(r[0])
-			processor = r[1]
+			addr  = r.addr
+			value = self.get_cell_value(r.addr)
+			processor = r.cpu
 			
 			# If the address/value is not in the REGISTER     ]
 			# request the value from the CACHE        ]
@@ -482,10 +488,10 @@ class RegisterSet(GenericRegisterSet):
 		req_copy = self.req
 		
 		for r in req_copy:
-			addr  = r[0]
-			value = self.get_cell_value(r[0])
-			processor = r[1]
-			processor_rid = r[2]
+			addr  = r.addr
+			value = self.get_cell_value(r.addr)
+			processor = r.cpu
+			processor_rid = r.rid
 			
 			# If the address/value is not in the REGISTER yet
 			# it may be in the answer list from cache
@@ -640,7 +646,7 @@ class Processor(GenericProcessor):
 	def send_register_requests(self):
 		for address in self.addresses_to_look_for:
 			if not self.is_in_answers(address):
-				self.register_set.request(address, self, self.rid)
+				self.register_set.request(Req_cpu_to_register(address, self, self.rid))
 				self.sent_register_requests += 1
 				self.system_manager.processor_notify_submit_request(self.register_set, self.rid, address)
 				self.rid += 1
