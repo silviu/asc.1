@@ -168,7 +168,7 @@ class Cache(GenericCache):
 		self.already_requested = []
 		
 		self.sync_answer = Synced_list()
-		self.answer = []
+		self.answer_list = []
 		
 		self.sync_req = Synced_list()
 		self.req = []
@@ -275,7 +275,7 @@ class Cache(GenericCache):
 			# If the value is still not in the CACHE
 			# check if it in the answers list
 			if value == None:
-				for answer in self.answer:
+				for answer in self.answer_list:
 					if answer[0] == addr:
 						value = answer[1]
 						position = self.set_cell_value(addr, value)
@@ -310,7 +310,7 @@ class Cache(GenericCache):
 	
 	
 	def prepare_answer_list(self):
-		self.answer = self.sync_answer.list
+		self.answer_list = self.sync_answer.list
 		self.sync_answer.list = []
 
 
@@ -331,9 +331,9 @@ class Cache(GenericCache):
 			
 
 			if len(self.req) > 0:
-				print "\n[CACHE INFO B ] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer)
+				print "\n[CACHE INFO B ] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
 				self.respond_requests()
-				print "\n[CACHE INFO A ] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer)
+				print "\n[CACHE INFO A ] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
 			barrier.end_reply_requests(self)
 			
 			
@@ -357,7 +357,7 @@ class RegisterSet(GenericRegisterSet):
 		self.req  = []
 		
 		self.sync_answer = Synced_list()
-		self.answer  = []
+		self.answer_list  = []
 	
 	# Checks if a request from REGISTER to CACHE for address
 	# has been already cast
@@ -408,7 +408,7 @@ class RegisterSet(GenericRegisterSet):
 	
 	#@echo.echo
 	def process_cache_answers(self):
-		for answer in self.answer:
+		for answer in self.answer_list:
 			dbg("REGISTER     ] " + str(self) + " is processing answer from CACHE for addr= " + str(answer[0]) + " value= " + str(answer[1]))
 			position = self.set_cell_value(answer[0], answer[1])
 			self.system_manager.register_set_notify_store_value(position, answer[0])
@@ -455,7 +455,7 @@ class RegisterSet(GenericRegisterSet):
 			# If the address/value is not in the REGISTER yet
 			# it may be in the answer list from cache
 			if value == None:
-				for answer in self.answer:
+				for answer in self.answer_list:
 					if answer[0] == addr:
 						value = answer[1]
 						position = self.set_cell_value(addr, value)
@@ -493,7 +493,7 @@ class RegisterSet(GenericRegisterSet):
 		self.sync_req.list = []
 	
 	def prepare_answer_lists(self):
-		self.answer = self.sync_answer.list
+		self.answer_list = self.sync_answer.list
 		self.sync_answer.list = []
 	
 	
@@ -520,9 +520,9 @@ class RegisterSet(GenericRegisterSet):
 				self.process_cache_answers()
 			
 			if len(self.req) > 0:
-				print "\n[REGISTER INFO B] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer)
+				print "\n[REGISTER INFO B] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
 				self.respond_requests()
-				print "\n[REGISTER INFO A] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer)
+				print "\n[REGISTER INFO A] REQUEST LIST = " + str(self.req) + "\n\t\t ANSWER LIST = " + str(self.answer_list)
 			
 			barrier.end_reply_requests(self)
 
