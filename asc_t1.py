@@ -140,7 +140,7 @@ class Ram(GenericRAM):
 		for tcr in req_copy:
 			r = tcr.o
 			if (requests_done > self.num_ram_requests_per_time_step):
-				return
+				break
 			
 			if (tcr.my_time == self.my_time):
 				continue
