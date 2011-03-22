@@ -9,8 +9,8 @@ from asc_t1 import *
 
 __TOTAL_POINTS = 0
 StdOutLock = Lock()
-DEBUG_MODE = 1
-PRINT_STATISTICS = 1
+DEBUG_MODE = 0
+PRINT_STATISTICS = 0
 
 class SystemManager(Thread):
     def __init__(self, TMAX, num_caches, num_register_sets, num_processors, num_ram_cells, num_cache_cells, num_register_cells, num_ram_reqs_per_time_step, processor_register_dic, register_cache_dic, process_list, time_limit, max_max_processing_delay_for_bonus, bonus1, max_avg_processing_delay_for_bonus, bonus2, max_cost_for_bonus, bonus3):
@@ -1137,8 +1137,8 @@ if __name__=="__main__":
 	print "### TESTUL 2 ###"
 	test2()
 	print "PUNCTAJ TOTAL DUPA PRIMELE DOUA TESTE:", __TOTAL_POINTS
-	#print "### TESTUL 3 ###"
-	#test3()
-	#print "PUNCTAJ TOTAL DUPA PRIMELE TREI TESTE:", __TOTAL_POINTS
+	print "### TESTUL 3 ###"
+	test3()
+	print "PUNCTAJ TOTAL DUPA PRIMELE TREI TESTE:", __TOTAL_POINTS
 
    # print "CU ACORDUL ASISTENTULUI, PUNCTAJUL MAXIM PE CARE IL POTI OBTINE PE TEMA ESTE:", __TOTAL_POINTS + 25

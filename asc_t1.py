@@ -248,15 +248,14 @@ class Cache(GenericCache):
 	#@echo.echo
 	def set_cell_value(self, addr, value):
 		# look for first empty cell
-		min_time = self.my_time
+		min_time = sys.maxint
 		i = 0
 		saved_position = 0
 		
 		for cache_cell in self.cache:
 			if cache_cell.timestamp < min_time:
 				min_time = cache_cell.timestamp
-				if (i < self.num_cache_cells):
-					saved_position = i
+				saved_position = i
 			i += 1
 		# if there are no more empty cells
 		# default on overwriting cell 0
@@ -456,8 +455,7 @@ class RegisterSet(GenericRegisterSet):
 		for register_cell in self.register_set:
 			if register_cell.timestamp < min_time:
 				min_time = register_cell.timestamp
-				if (i < self.num_register_cells):
-					saved_position = i
+				saved_position = i
 			i += 1
 		# if there are no more empty cells
 		# default on overwriting cell 0
@@ -657,17 +655,6 @@ class Processor(GenericProcessor):
 				return True
 		return False
 	
-	# Returns the maximum number of operations
-	# a process has done 
-	#@echo.echo
-	def get_max_operations(self):
-		max_op = 0
-		for proc in self.process_requests:
-			sync_op = proc.get_number_of_executed_operations()
-			if sync_op > max_op:
-				max_op = sync_op
-		return max_op
-	
 	# Returns a process from the process list to be run next
 	# It is chosen by the max number of operations it already has done
 	#@echo.echo
@@ -782,7 +769,7 @@ class Processor(GenericProcessor):
 		suma = 0
 		for tprocess in self.process_requests:
 			process = tprocess.o
-			suma += process.get_number_of_operations()
+			suma += process.get_number_of_operations() - process.get_number_of_executed_operations()
 		return suma
 	
 	# Sends the sum of all operations in all processes
@@ -862,7 +849,7 @@ class ProcessScheduler(GenericProcessScheduler):
 		saved_cpu = self.processor_list[0]
 		saved_i = 0
 		
-		print "\nCPU INFOOOOOO " + str(self.process_info)
+		#print "\nCPU INFOOOOOO " + str(self.process_info)
 		for i in range(len(self.process_info)):
 			pr = self.process_info[i]
 			cpu = pr[0]
@@ -903,14 +890,15 @@ class ProcessScheduler(GenericProcessScheduler):
 	def run(self):
 		self.system_manager.register_scheduler(self)
 		global EXIT_TIME
-		barrier.end_requests(object)
-		barrier.end_process_requests(object)
-		barrier.end_reply_requests(object)
-		barrier.end_process_answers(object)
-		barrier.end_requests(object)
-		barrier.end_process_requests(object)
-		barrier.end_reply_requests(object)
-		barrier.end_process_answers(object)
+		barrier.end_requests(self)
+		barrier.end_process_requests(self)
+		barrier.end_reply_requests(self)
+		barrier.end_process_answers(self)
+
+		barrier.end_requests(self)		
+		barrier.end_process_requests(self)
+		barrier.end_reply_requests(self)
+		barrier.end_process_answers(self)
 		while(1):
 			self.my_time += 1
 			if EXIT_TIME:
