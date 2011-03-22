@@ -893,11 +893,13 @@ class ProcessScheduler(GenericProcessScheduler):
 		barrier.end_requests(self)
 		barrier.end_process_requests(self)
 		barrier.end_reply_requests(self)
+		self.prepare_answer_lists()
 		barrier.end_process_answers(self)
 
 		barrier.end_requests(self)		
 		barrier.end_process_requests(self)
 		barrier.end_reply_requests(self)
+		self.prepare_answer_lists()
 		barrier.end_process_answers(self)
 		while(1):
 			self.my_time += 1
